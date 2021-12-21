@@ -1,3 +1,0 @@
-aaa admin
-aaa guest
-guest admin

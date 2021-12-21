@@ -17,6 +17,7 @@
 #include <map>
 #include <vector>
 #include "transfer.h"
+#include "data_managing.h"
 
 
 #define MAX_CLI 30
@@ -151,10 +152,24 @@ int main(int argc , char *argv[])
          
     //accept the incoming connection 
     addrlen = sizeof(address);  
-    puts("Waiting for connections ...");  
+    puts("Waiting for connections ...");
 
-    load_users("users.txt", user2socket);
-    load_friends("friends.txt", friends_lists);
+    chat_db database;  
+    database.init_db();
+    database.add_user("aaa");
+    database.add_user("bbb");
+    database.add_user("ccc");
+    database.add_user("ddd");
+    database.add_user("eee");
+    database.add_friends("aaa","ddd");
+    database.add_friends("aaa","ccc");
+    database.add_friends("bbb","aaa");
+    vector<string> v = database.ls_friends("aaa");
+    for(auto i : v){
+        cout<<"aaa is friends with "<<i<<endl;
+    }
+    load_users("data/users.txt", user2socket);
+    load_friends("data/friends.txt", friends_lists);
     
 
     while(1)  
@@ -298,9 +313,11 @@ int main(int argc , char *argv[])
                                 if(user2socket.count(t) == 0){
                                     send_str(sockfd, "No user with that name.\n");
                                 }else{
-                                    add_friends(names[i], t, "friends.txt", friends_lists);
+                                    add_friends(names[i], t, "data/friends.txt", friends_lists);
                                     send_str(sockfd, "Added '"+t+"' as friend.\n");
                                 }  
+                            }else if(t == "del"){
+
                             }
                             break;
                         case SIGNING_UP:
@@ -310,7 +327,7 @@ int main(int argc , char *argv[])
                             }else if(user2socket.count(c) == 0){
                                 send_str(sockfd, "Logged in\nType in commands or \"logout\" to logout.\n");
                                 client_state[i] = LOGGED_IN;
-                                add_user(c, "users.txt", user2socket);
+                                add_user(c, "data/users.txt", user2socket);
                                 user2socket[c] = i;
                                 names[i] = c;
                             }else{

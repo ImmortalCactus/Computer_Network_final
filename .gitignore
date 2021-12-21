@@ -1,5 +1,8 @@
-client
-server
-users.txt
 test
 test.cpp
+server
+client
+sqlite3.o
+friends.txt
+user.txt
+char.db
