@@ -44,9 +44,9 @@ int main(int argc, char *argv[])
     int sockfd = init_client(string(argv[1]));
     while(1){
         string c = recv_str(sockfd);
-        if(c == "You want to quit\n")return 0;
+        if(c == "You want to quit\n") return 0;
         cout<<c;
-        cin>>c;
+        getline(cin, c);
         send_str(sockfd, c);
     }
     return 0;
