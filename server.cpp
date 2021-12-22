@@ -173,7 +173,6 @@ int main(int argc , char *argv[])
 
                     client_socket[i] = new_socket;
                     client_state[i] = NO_ONE;
-                    send_str(new_socket, "1. login\n2. signup\n3. quit\n");
                     printf("Adding to list of sockets as %d\n" , i);    
                     break;  
                 }  
@@ -212,17 +211,17 @@ int main(int argc , char *argv[])
                     switch(client_state[i]){
                         case NO_ONE:
                             if(c == "1"){
-                                send_str(sockfd, "You want to login\nInput your username below or type \"cancel\" to cancel: \n");
+                                send_str(sockfd, "You want to login\nInput your username below or type \"1\" to cancel: \n");
                                 client_state[i] = LOGGING_IN;
                             }else if(c == "2"){
-                                send_str(sockfd, "You want to signup\nPlease choose your username below or type \"cancel\" to cancel: \n");
+                                send_str(sockfd, "You want to signup\nPlease choose your username below or type \"1\" to cancel: \n");
                                 client_state[i] = SIGNING_UP;
                             }else if(c == "3"){
                                 send_str(sockfd, "You want to quit\n");
                             }
                             break;
                         case LOGGING_IN:
-                            if(c == "cancel"){
+                            if(c == "1"){
                                 send_str(sockfd, "1. login\n2. signup\n3. quit\n");
                                 client_state[i] = NO_ONE;
                             }else if(database.has_user(c) != 0){
