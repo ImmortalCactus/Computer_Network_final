@@ -107,8 +107,3 @@ vector<string> chat_db::ls_friends(string user){
     }
     return v;
 }
-
-vector<string> chat_db::load_users(){
-    vector<string> v;
-    return v;
-}

@@ -28,63 +28,11 @@ using namespace std;
 
 enum state {NOT_USED, NO_ONE, LOGGING_IN, LOGGED_IN, SIGNING_UP};
 
-void load_users(string filename, map<string, int> &user2socket){
-    ifstream user_fs;
-    user_fs.open(filename);
-    while(!user_fs.eof()){
-        string u;
-        user_fs >> u;
-        user2socket.insert(pair<string, int>(u, -1));
-        cout<<"Load user '"<<u<<"'"<<endl;
+bool user_online(string user, string names[], state client_state[]){
+    for(int i=0; i<MAX_CLI; i++){
+        if(names[i]==user && client_state[i] == LOGGED_IN)return 1;
     }
-    user_fs.close();
-}
-
-void add_user(string username, string filename, map<string, int> &user2socket){
-    user2socket.insert(pair<string, int>(username, -1));
-    ofstream user_fs;
-    user_fs.open(filename, ios_base::app);
-    user_fs<<endl<<username;
-    cout<<"New user '"<<username<<"'"<<endl;
-}
-
-void load_friends(string filename, map<string, vector<string> > &friends_lists){
-    ifstream friends_fs;
-    friends_fs.open(filename);
-    while(!friends_fs.eof()){
-        string user1, user2;
-        friends_fs >> user1 >> user2;
-        if(friends_lists.count(user1) == 0){
-            vector<string> empty_vec;
-            friends_lists.insert(pair<string, vector<string> >(user1, empty_vec));
-        }
-        if(friends_lists.count(user2) == 0){
-            vector<string> empty_vec;
-            friends_lists.insert(pair<string, vector<string> >(user2, empty_vec));
-        }
-        friends_lists[user1].push_back(user2);
-        friends_lists[user2].push_back(user1);
-        cout<<"Load friendship '"<<user1<<"' with '"<<user2<<"'"<<endl;
-    }
-    friends_fs.close();
-}
-
-void add_friends(string user1, string user2, string filename, map<string, vector<string> > &friends_lists){
-    if(friends_lists.count(user1) == 0){
-        vector<string> empty_vec;
-        friends_lists.insert(pair<string, vector<string> >(user1, empty_vec));
-    }
-    if(friends_lists.count(user2) == 0){
-        vector<string> empty_vec;
-        friends_lists.insert(pair<string, vector<string> >(user2, empty_vec));
-    }
-    friends_lists[user1].push_back(user2);
-    friends_lists[user2].push_back(user1);
-    ofstream friends_fs;
-    friends_fs.open(filename, ios_base::app);
-    friends_fs<<endl<<user1<<" "<<user2;
-    friends_fs.close();
-    cout<<"New friendship '"<<user1<<"' with '"<<user2<<"'"<<endl;
+    return 0;
 }
 
 int main(int argc , char *argv[])  
@@ -93,7 +41,6 @@ int main(int argc , char *argv[])
     int master_socket , addrlen , new_socket , client_socket[MAX_CLI], activity, i , valread;
     state client_state[MAX_CLI];
     string names[MAX_CLI];
-    map<string, int> user2socket;
     map<string, vector<string> > friends_lists;
 
     int max_sd;  
@@ -168,8 +115,6 @@ int main(int argc , char *argv[])
     for(auto i : v){
         cout<<"aaa is friends with "<<i<<endl;
     }
-    load_users("data/users.txt", user2socket);
-    load_friends("data/friends.txt", friends_lists);
     
 
     while(1)  
@@ -254,7 +199,6 @@ int main(int argc , char *argv[])
                     close(sockfd);  
                     client_socket[i] = 0; 
                     client_state[i] = NOT_USED;
-                    user2socket[names[i]] = -1;
                     names[i] = "";
                 }  
                      
@@ -262,7 +206,6 @@ int main(int argc , char *argv[])
                 else 
                 {
                     string c = recv_str(sockfd);
-                    cout<<"GOT: "<<c<<endl;
                     stringstream c_ss(c);
                     string t;
                     c_ss >> t;
@@ -282,11 +225,10 @@ int main(int argc , char *argv[])
                             if(c == "cancel"){
                                 send_str(sockfd, "1. login\n2. signup\n3. quit\n");
                                 client_state[i] = NO_ONE;
-                            }else if(user2socket.count(c) != 0){
-                                if(user2socket[c] == -1){
+                            }else if(database.has_user(c) != 0){
+                                if(!user_online(c,names,client_state)){
                                     send_str(sockfd, "Logged in\nType in commands or \"logout\" to logout.\n");
                                     client_state[i] = LOGGED_IN;
-                                    user2socket[c] = i;
                                     names[i] = c;
                                 }else{
                                     send_str(sockfd, "Failed. You are logged in somewhere else.\n1. login\n2. signup\n3. quit\n");
@@ -305,30 +247,32 @@ int main(int argc , char *argv[])
                             if(t == "logout"){
                                 send_str(sockfd, "Logged out.\n1. login\n2. signup\n3. quit\n");
                                 client_state[i] = NO_ONE;
-                                user2socket[names[i]] = -1;
                             }else if(t == "whoami"){
                                 send_str(sockfd, "You are "+names[i]+".\n");
                             }else if(t == "add"){
                                 c_ss >> t;
-                                if(user2socket.count(t) == 0){
+                                if(database.has_user(t) == 0){
                                     send_str(sockfd, "No user with that name.\n");
                                 }else{
-                                    add_friends(names[i], t, "data/friends.txt", friends_lists);
+                                    database.add_friends(names[i], t);
                                     send_str(sockfd, "Added '"+t+"' as friend.\n");
                                 }  
-                            }else if(t == "del"){
-
+                            }else if(t == "ls"){
+                                vector<string> friends_list = database.ls_friends(names[i]);
+                                string str="Your friends are: ";
+                                for(auto i : friends_list)str += i;
+                                str += "\n";
+                                send_str(sockfd, str);
                             }
                             break;
                         case SIGNING_UP:
                             if(c == "cancel"){
                                 send_str(sockfd, "1. login\n2. signup\n3. quit\n");
                                 client_state[i] = NO_ONE;
-                            }else if(user2socket.count(c) == 0){
+                            }else if(database.has_user(t) == 0){
                                 send_str(sockfd, "Logged in\nType in commands or \"logout\" to logout.\n");
                                 client_state[i] = LOGGED_IN;
-                                add_user(c, "data/users.txt", user2socket);
-                                user2socket[c] = i;
+                                database.add_user(c);
                                 names[i] = c;
                             }else{
                                 send_str(sockfd, "Failed. Username used.\n1. login\n2. signup\n3. quit\n");
