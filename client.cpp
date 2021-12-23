@@ -112,6 +112,13 @@ int main(int argc, char *argv[])
                     for(auto i : m){
                         cout<<i.first<<" "<<i.second<<endl;
                     }
+                    send_str(serverfd, "login "+m["username"]+" "+m["passwd"]);
+                    string res = recv_str(serverfd);
+                    if(res == "0"){
+                        cout<<"LOGGED IN!!"<<endl;
+                    }else{
+                        cout<<"FAILED LOGIN!!"<<endl;
+                    }
                     char buffer[1024] = "HTTP/1.1 200 OK\r\nContent-Length: 291\r\nContent-Type: text/html\r\n\r\n<html><body><form method=\"post\" action=\"/login\"><label for=\"username\">Username:</label><br><input type=\"text\" id=\"username\" name=\"username\"><br><label for=\"passwd\">Password:</label><br><input type=\"text\" id=\"passwd\" name=\"passwd\"><br><input type=\"submit\" value=\"Submit\"></form></body></html>";
                     write(browserfd, buffer, strlen(buffer));
                 }else{
@@ -121,10 +128,6 @@ int main(int argc, char *argv[])
             }else{
                 
             }
-        }
-
-        if(FD_ISSET(serverfd, &readfds)){
-            string c = recv_str(serverfd);
         }
     }
 

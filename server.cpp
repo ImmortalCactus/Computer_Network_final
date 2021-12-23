@@ -26,7 +26,7 @@
 using namespace std;
 
 
-enum state {NOT_USED, NO_ONE, LOGGING_IN, LOGGED_IN, SIGNING_UP};
+enum state {NOT_USED, SIGNING_UP, LOGGING_IN, NO_ONE,LOGGED_IN};
 
 bool user_online(string user, string names[], state client_state[]){
     for(int i=0; i<MAX_CLI; i++){
@@ -103,14 +103,6 @@ int main(int argc , char *argv[])
 
     chat_db database;  
     database.init_db();
-    database.add_user("aaa");
-    database.add_user("bbb");
-    database.add_user("ccc");
-    database.add_user("ddd");
-    database.add_user("eee");
-    database.add_friends("aaa","ddd");
-    database.add_friends("aaa","ccc");
-    database.add_friends("bbb","aaa");
     vector<string> v = database.ls_friends("aaa");
     for(auto i : v){
         cout<<"aaa is friends with "<<i<<endl;
@@ -201,14 +193,28 @@ int main(int argc , char *argv[])
                     names[i] = "";
                 }  
                      
-                //Echo back the message that came in 
                 else 
                 {
                     string c = recv_str(sockfd);
                     stringstream c_ss(c);
                     string t;
                     c_ss >> t;
-                    switch(client_state[i]){
+                    if(t == "login"){
+                        string username, passwd;
+                            c_ss >> username >> passwd;
+                            if(database.has_user(username) != 0){
+                                if(!user_online(username, names, client_state)){
+                                    send_str(sockfd, "0");
+                                    client_state[i] = LOGGED_IN;
+                                    names[i] = username;
+                                }else{
+                                    send_str(sockfd, "1");
+                                }
+                            }else{
+                                send_str(sockfd, "2");
+                            }
+                    }
+                    /*switch(client_state[i]){
                         case NO_ONE:
                             if(c == "1"){
                                 send_str(sockfd, "You want to login\nInput your username below or type \"1\" to cancel: \n");
@@ -283,7 +289,7 @@ int main(int argc , char *argv[])
                             //else request again
                         default:
                             break;
-                    }
+                    }*/
                 }  
             }  
         }  
