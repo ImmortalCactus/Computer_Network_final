@@ -103,12 +103,9 @@ int main(int argc , char *argv[])
 
     chat_db database;  
     database.init_db();
-    vector<string> v = database.ls_friends("aaa");
-    for(auto i : v){
-        cout<<"aaa is friends with "<<i<<endl;
-    }
     
-
+    database.add_user("secret_user");
+    database.add_user("aaa");
     while(1)  
     {  
         //clear the socket set 
@@ -202,6 +199,7 @@ int main(int argc , char *argv[])
                     if(t == "login"){
                         string username, passwd;
                             c_ss >> username >> passwd;
+                            cout<<"\033[1;36mTrying login with "<<username<<"/"<<passwd<<"\033[0m\n";
                             if(database.has_user(username) != 0){
                                 if(!user_online(username, names, client_state)){
                                     send_str(sockfd, "0");
@@ -213,6 +211,22 @@ int main(int argc , char *argv[])
                             }else{
                                 send_str(sockfd, "2");
                             }
+                    }else if(t == "signup"){
+                        string username, passwd;
+                            c_ss >> username >> passwd;
+                            if(database.has_user(username) == 0){
+                                if(!user_online(username, names, client_state)){
+                                    send_str(sockfd, "0");
+                                    client_state[i] = LOGGED_IN;
+                                    names[i] = username;
+                                }else{
+                                    send_str(sockfd, "1");
+                                }
+                            }else{
+                                send_str(sockfd, "1");
+                            }
+                    }else if(t == ""){
+
                     }
                     /*switch(client_state[i]){
                         case NO_ONE:

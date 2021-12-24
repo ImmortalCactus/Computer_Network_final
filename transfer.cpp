@@ -187,3 +187,31 @@ map<string, string> process_form_data(string form_data){
     }
     return ret;
 }
+
+void send_http(int sockfd, string file, string type){
+    FILE *fp;
+    fp = fopen(file.c_str(), "rb");
+    int size;
+    struct stat st;
+    stat(file.c_str(), &st);
+    size = (int)st.st_size;
+    string http_str = "HTTP/1.1 200 OK\r\nContent-Length: "+to_string(size)+"\r\nContent-Type: "+type+"\r\n\r\n";
+
+
+    char buffer[BUF_SIZE];
+
+    int bytes_read;
+    while((bytes_read=fread(buffer, 1, sizeof(buffer)-1, fp))>0){
+        buffer[bytes_read]='\0';
+        http_str += string(buffer);
+    }
+    fclose(fp);
+
+    cout<<http_str<<endl;
+
+    int bytes_sent = 0;
+    while(bytes_sent < http_str.length()){
+        int n = write(sockfd, http_str.substr(bytes_sent).c_str(), http_str.length()-bytes_sent);
+        bytes_sent += n;
+    }
+}

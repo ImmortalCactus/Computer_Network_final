@@ -38,7 +38,6 @@ int chat_db::has_user(string user){
     char *zErrMsg = 0;
     auto callback = [](void *data, int argc, char **argv, char **azColName) { 
         (*(int *)data)++;
-        cout<<"found user!"<<endl;
         return 0;
     };
     string sql = "select * from USERS where NAME = '" + user + "'";

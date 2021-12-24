@@ -109,24 +109,21 @@ int main(int argc, char *argv[])
             if(logged_in == 0){
                 if(r.action == "/login" && r.method == "POST"){
                     map<string, string> m = process_form_data(r.content);
-                    for(auto i : m){
-                        cout<<i.first<<" "<<i.second<<endl;
-                    }
                     send_str(serverfd, "login "+m["username"]+" "+m["passwd"]);
                     string res = recv_str(serverfd);
                     if(res == "0"){
-                        cout<<"LOGGED IN!!"<<endl;
+                        cout<<"\033[1;32mLOGGED IN!!\033[0m"<<endl;
                     }else{
-                        cout<<"FAILED LOGIN!!"<<endl;
+                        cout<<"\033[1;31mFAILED LOGIN!!\033[0m"<<endl;
                     }
-                    char buffer[1024] = "HTTP/1.1 200 OK\r\nContent-Length: 291\r\nContent-Type: text/html\r\n\r\n<html><body><form method=\"post\" action=\"/login\"><label for=\"username\">Username:</label><br><input type=\"text\" id=\"username\" name=\"username\"><br><label for=\"passwd\">Password:</label><br><input type=\"text\" id=\"passwd\" name=\"passwd\"><br><input type=\"submit\" value=\"Submit\"></form></body></html>";
-                    write(browserfd, buffer, strlen(buffer));
+                    send_http(browserfd, "./static/login.html", "text/html");
+                }else if(r.action.length()>=8 && r.action.substr(0,8) == "/static/"){
+                    send_http(browserfd, "."+r.action, "image/png");
                 }else{
-                    char buffer[1024] = "HTTP/1.1 200 OK\r\nContent-Length: 291\r\nContent-Type: text/html\r\n\r\n<html><body><form method=\"post\" action=\"/login\"><label for=\"username\">Username:</label><br><input type=\"text\" id=\"username\" name=\"username\"><br><label for=\"passwd\">Password:</label><br><input type=\"text\" id=\"passwd\" name=\"passwd\"><br><input type=\"submit\" value=\"Submit\"></form></body></html>";
-                    write(browserfd, buffer, strlen(buffer));
+                    send_http(browserfd, "./static/login.html", "text/html");
                 }
             }else{
-                
+
             }
         }
     }
