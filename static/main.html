@@ -1,0 +1,22 @@
+<html>
+    <body>
+        <h1>You are logged in.</h1>
+        <div id="friends">
+
+        </div>
+    </body>
+    <script>
+        var friends_block = document.getElementById('friends');
+        fetch("/static/test.json")
+        .then(response => response.json())
+        .then(json => (function(x){
+            var i;
+            for(i=0;i<x["friends"].length;i++){
+                var node = document.createElement("LI");
+                var textnode = document.createTextNode(x["friends"][i]);  
+                node.appendChild(textnode);
+                friends_block.appendChild(node);
+            }
+        })(json));
+    </script>
+</html>

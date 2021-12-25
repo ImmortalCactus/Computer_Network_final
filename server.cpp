@@ -105,8 +105,15 @@ int main(int argc , char *argv[])
     database.init_db();
     database.add_user("bbb");
     database.add_user("aaa");
-    database.add_friends("aaa", "bbb");
-    database.delete_friends("aaa", "bbb");
+    database.add_chat_log("aaa", "bbb", TEXT, "Hello bbb, I am aaa.");
+    database.add_chat_log("bbb", "aaa", TEXT, "Hello aaa, Nice to meet you.");
+    database.add_chat_log("aaa", "bbb", TEXT, "This is nice.");
+    auto v = database.get_chat_log("aaa", "bbb");
+    for(auto i:v){
+        i.formatted_display();
+    }
+    /*database.add_friends("aaa", "bbb");
+    database.delete_friends("aaa", "bbb");*/
     while(1)  
     {  
         //clear the socket set 
@@ -216,13 +223,10 @@ int main(int argc , char *argv[])
                         string username, passwd;
                             c_ss >> username >> passwd;
                             if(database.has_user(username) == 0){
-                                if(!user_online(username, names, client_state)){
-                                    send_str(sockfd, "0");
-                                    client_state[i] = LOGGED_IN;
-                                    names[i] = username;
-                                }else{
-                                    send_str(sockfd, "1");
-                                }
+                                database.add_user(username);
+                                client_state[i] = LOGGED_IN;
+                                names[i] = username;
+                                send_str(sockfd, "0");
                             }else{
                                 send_str(sockfd, "1");
                             }

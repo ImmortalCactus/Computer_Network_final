@@ -117,20 +117,50 @@ int main(int argc, char *argv[])
                         send_str(serverfd, "login "+m["username"]+" "+m["passwd"]);
                         string res = recv_str(serverfd);
                         if(res == "0"){
+                            logged_in = 1;
                             cout<<"\033[1;32mLOGGED IN!!\033[0m"<<endl;
+                            send_http(browserfd, "./static/main.html", "text/html");
                         }else{
                             cout<<"\033[1;31mFAILED LOGIN!!\033[0m"<<endl;
+                            send_http(browserfd, "./static/login.html", "text/html");
+                        }
+                        /*string s = "HTTP/1.1 303 See Other\r\nLocation: wwsdfgsdfgsdgf\r\n\r\n";
+                        write(browserfd, s.c_str(), s.length());*/
+                        
+                    }else if(r.action == "/signup"){
+                        map<string, string> m = process_form_data(r.content);
+                        send_str(serverfd, "signup "+m["username"]+" "+m["passwd"]);
+                        string res = recv_str(serverfd);
+                        if(res == "0"){
+                            logged_in = 1;
+                            cout<<"\033[1;32mACCOUNT CREATED!!\033[0m"<<endl;
+                            send_http(browserfd, "./static/main.html", "text/html");
+                        }else{
+                            cout<<"\033[1;31mFAILED SIGNUP!!\033[0m"<<endl;
+                            send_http(browserfd, "./static/login.html", "text/html");
                         }
                     }
-                }if(r.method == "GET"){
+                }else if(r.method == "GET"){
                     if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
                         send_http(browserfd, "."+r.action, "image/png");
+                    }else if(r.action == "/signup"){
+                        send_http(browserfd, "./static/signup.html", "text/html");
+                    }else if(r.action.length()>=8 && r.action.substr(0,8)=="/static/"){
+                        send_http(browserfd, "."+r.action, "text/html");
                     }else{
                         send_http(browserfd, "./static/login.html", "text/html");
                     }
                 }
             }else{
-
+                if(r.method == "GET"){
+                    if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
+                        send_http(browserfd, "."+r.action, "image/png");
+                    }else if(r.action.length()>=8 && r.action.substr(0,8)=="/static/"){
+                        send_http(browserfd, "."+r.action, "text/html");
+                    }else{
+                        send_http(browserfd, "./static/main.html", "text/html");
+                    }
+                }
             }
         }
     }

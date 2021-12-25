@@ -114,13 +114,13 @@ string stringtolower(string s){
 
 
 http_request get_http_request(int sockfd){
+    http_request ret;
     char buffer[BUF_SIZE+1];
     int state = 0;
     int got_first_line = 0;
     string line = "";
-    http_request ret;
     while(1){
-        read(sockfd, buffer, 1);
+        int n = read(sockfd, buffer, 1);
         if(state == 1 && buffer[0]=='\n'){
             line = "";
             state = 0;
@@ -167,11 +167,11 @@ http_request get_http_request(int sockfd){
 }
 
 void http_request::display(){
-    cout<<"================\n";
+    cout<<"========START OF REQUEST========\n";
     cout<<"METHOD: "<<method<<"\nACTION: "<<action<<"\nVERSION: "<<http_version<<"\nHEADERS: \n";
     for(auto i : headers)cout<<i.first<<": "<<i.second<<endl;
     cout<<"CONTENT:\n"<<content<<endl;
-    cout<<"================\n";
+    cout<<"========END OF REQUEST========\n";
 }
 
 map<string, string> process_form_data(string form_data){
