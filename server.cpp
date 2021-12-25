@@ -103,9 +103,10 @@ int main(int argc , char *argv[])
 
     chat_db database;  
     database.init_db();
-    
-    database.add_user("secret_user");
+    database.add_user("bbb");
     database.add_user("aaa");
+    database.add_friends("aaa", "bbb");
+    database.delete_friends("aaa", "bbb");
     while(1)  
     {  
         //clear the socket set 

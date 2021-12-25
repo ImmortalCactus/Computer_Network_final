@@ -195,23 +195,35 @@ void send_http(int sockfd, string file, string type){
     struct stat st;
     stat(file.c_str(), &st);
     size = (int)st.st_size;
-    string http_str = "HTTP/1.1 200 OK\r\nContent-Length: "+to_string(size)+"\r\nContent-Type: "+type+"\r\n\r\n";
-
-
-    char buffer[BUF_SIZE];
-
-    int bytes_read;
-    while((bytes_read=fread(buffer, 1, sizeof(buffer)-1, fp))>0){
-        buffer[bytes_read]='\0';
-        http_str += string(buffer);
-    }
-    fclose(fp);
-
-    cout<<http_str<<endl;
-
+    string http_str = "HTTP/1.1 200 OK\r\nContent-Length: "+to_string(size)+"\r\n\r\n";
     int bytes_sent = 0;
+
     while(bytes_sent < http_str.length()){
         int n = write(sockfd, http_str.substr(bytes_sent).c_str(), http_str.length()-bytes_sent);
         bytes_sent += n;
     }
+
+
+    char buffer[BUF_SIZE];
+    bytes_sent = 0;
+    int bytes_read;
+    while(bytes_sent < size){
+        if((bytes_read=fread(buffer, 1, sizeof(buffer), fp))<=0){
+            break;
+        }
+        size_t cur_bytes_sent = 0;
+        while(cur_bytes_sent<bytes_read){
+            int n = write(sockfd, buffer+cur_bytes_sent, bytes_read-cur_bytes_sent);
+            //cout<<"sent "<<n<<endl;
+            if(n==-1){
+                fclose(fp);
+                return;
+            }
+            cur_bytes_sent += n;
+        }
+        bytes_sent += cur_bytes_sent;
+    }
+
+    fclose(fp);
+    return;
 }

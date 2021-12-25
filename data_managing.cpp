@@ -75,6 +75,18 @@ void chat_db::add_friends(string user1, string user2){
     }
 }
 
+void chat_db::delete_friends(string user1, string user2){
+    char *zErrMsg = 0;
+    string sql = "delete from FRIENDS where USERA = '" + user1 +"' and USERB = '" + user2 + "' or USERA = '" + user2 +"' and USERB = '" + user1 + "';";
+    int rc = sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }else{
+        fprintf(stdout, "Operation done successfully\n");
+    }
+};
+
 vector<string> chat_db::ls_friends(string user){
     vector<string> v;
     char *zErrMsg = 0;

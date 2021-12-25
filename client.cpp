@@ -79,12 +79,14 @@ int init_server(string port_s){
         perror("listen");
         exit(EXIT_FAILURE);
     }
+    cout<<"\033[1;32mWAITING FOR CONNECTION ON PORT "<<port<<"...\033[0m"<<endl;
     if ((new_socket = accept(server_fd, (struct sockaddr *)&address, 
                        (socklen_t*)&addrlen))<0)
     {
         perror("accept");
         exit(EXIT_FAILURE);
     }
+    cout<<"\033[1;32mCONNECTED\033[0m"<<endl;
     return new_socket;
 }
 
@@ -94,6 +96,7 @@ int main(int argc, char *argv[])
     int username;
     int serverfd = init_client(string(argv[1]));
     int browserfd = init_server(string(argv[2]));
+    cout<<"BOTH CONNECTION INITIALIZED"<<endl;
     fd_set readfds;
     while(1){
         FD_ZERO(&readfds);
@@ -105,22 +108,26 @@ int main(int argc, char *argv[])
 
         if(FD_ISSET(browserfd, &readfds)){
             http_request r = get_http_request(browserfd);
+            cout<<"\033[1;36mREQUEST RECEIVED\033[0m"<<endl;
             r.display();
             if(logged_in == 0){
-                if(r.action == "/login" && r.method == "POST"){
-                    map<string, string> m = process_form_data(r.content);
-                    send_str(serverfd, "login "+m["username"]+" "+m["passwd"]);
-                    string res = recv_str(serverfd);
-                    if(res == "0"){
-                        cout<<"\033[1;32mLOGGED IN!!\033[0m"<<endl;
-                    }else{
-                        cout<<"\033[1;31mFAILED LOGIN!!\033[0m"<<endl;
+                if(r.method == "POST"){
+                    if(r.action == "/login"){
+                        map<string, string> m = process_form_data(r.content);
+                        send_str(serverfd, "login "+m["username"]+" "+m["passwd"]);
+                        string res = recv_str(serverfd);
+                        if(res == "0"){
+                            cout<<"\033[1;32mLOGGED IN!!\033[0m"<<endl;
+                        }else{
+                            cout<<"\033[1;31mFAILED LOGIN!!\033[0m"<<endl;
+                        }
                     }
-                    send_http(browserfd, "./static/login.html", "text/html");
-                }else if(r.action.length()>=8 && r.action.substr(0,8) == "/static/"){
-                    send_http(browserfd, "."+r.action, "image/png");
-                }else{
-                    send_http(browserfd, "./static/login.html", "text/html");
+                }if(r.method == "GET"){
+                    if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
+                        send_http(browserfd, "."+r.action, "image/png");
+                    }else{
+                        send_http(browserfd, "./static/login.html", "text/html");
+                    }
                 }
             }else{
 
