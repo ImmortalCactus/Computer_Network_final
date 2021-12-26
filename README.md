@@ -17,4 +17,4 @@ Client
 ```
 ./client [server_host]:[port] [port for browser] 
 ```
-Then access localhost:[port for broswer]
+Then access `localhost:[port for broswer]` in browser
