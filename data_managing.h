@@ -24,6 +24,7 @@ public:
     void add_user(string);
     void add_friends(string, string);
     void delete_friends(string, string);
+    int is_friends(string, string);
     vector<string> ls_friends(string);
     void add_chat_log(string, string, int, string);
     vector<chat_log> get_chat_log(string, string);

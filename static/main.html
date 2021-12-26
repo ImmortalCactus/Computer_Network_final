@@ -4,10 +4,23 @@
         <div id="friends">
 
         </div>
+        <form method="post" action="/add">
+            <label for="username">Add Friends with their name:</label><br>
+            <input type="text" id="username" name="username"><br>
+            <input type="submit" value="Add">
+        </form>
+        <form method="post" action="/del">
+            <label for="username">Delete Friends with their name:</label><br>
+            <input type="text" id="username" name="username"><br>
+            <input type="submit" value="Delete">
+        </form>
+        <form method="post" action="/logout">
+            <input type="submit" value="Logout">
+        </form>
     </body>
     <script>
         var friends_block = document.getElementById('friends');
-        fetch("/static/test.json")
+        fetch("/friends")
         .then(response => response.json())
         .then(json => (function(x){
             var i;

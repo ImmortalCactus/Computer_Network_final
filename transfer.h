@@ -22,3 +22,4 @@ void send_str(int sockfd, const string& str);
 http_request get_http_request(int sockfd);
 map<string, string> process_form_data(string form_data);
 void send_http(int sockfd, string file, string type);
+void send_redirect(int sockfd, string url);

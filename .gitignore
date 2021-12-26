@@ -1,8 +1,5 @@
-test
-test.cpp
-server
-client
+chat.db
 sqlite3.o
-friends.txt
-user.txt
-char.db
+data/friends.json
+client
+server

@@ -41,7 +41,6 @@ int main(int argc , char *argv[])
     int master_socket , addrlen , new_socket , client_socket[MAX_CLI], activity, i , valread;
     state client_state[MAX_CLI];
     string names[MAX_CLI];
-    map<string, vector<string> > friends_lists;
 
     int max_sd;  
     struct sockaddr_in address;  
@@ -105,13 +104,13 @@ int main(int argc , char *argv[])
     database.init_db();
     database.add_user("bbb");
     database.add_user("aaa");
+    database.add_user("ccc");
+    database.add_user("ddd");
+    database.add_friends("aaa", "bbb");
+    database.add_friends("aaa", "ddd");
     database.add_chat_log("aaa", "bbb", TEXT, "Hello bbb, I am aaa.");
     database.add_chat_log("bbb", "aaa", TEXT, "Hello aaa, Nice to meet you.");
     database.add_chat_log("aaa", "bbb", TEXT, "This is nice.");
-    auto v = database.get_chat_log("aaa", "bbb");
-    for(auto i:v){
-        i.formatted_display();
-    }
     /*database.add_friends("aaa", "bbb");
     database.delete_friends("aaa", "bbb");*/
     while(1)  
@@ -201,114 +200,63 @@ int main(int argc , char *argv[])
                 else 
                 {
                     string c = recv_str(sockfd);
-                    stringstream c_ss(c);
-                    string t;
-                    c_ss >> t;
-                    if(t == "login"){
-                        string username, passwd;
-                            c_ss >> username >> passwd;
-                            cout<<"\033[1;36mTrying login with "<<username<<"/"<<passwd<<"\033[0m\n";
-                            if(database.has_user(username) != 0){
-                                if(!user_online(username, names, client_state)){
-                                    send_str(sockfd, "0");
-                                    client_state[i] = LOGGED_IN;
-                                    names[i] = username;
-                                }else{
-                                    send_str(sockfd, "1");
-                                }
-                            }else{
-                                send_str(sockfd, "2");
-                            }
-                    }else if(t == "signup"){
-                        string username, passwd;
-                            c_ss >> username >> passwd;
-                            if(database.has_user(username) == 0){
-                                database.add_user(username);
+                    if(c == "login"){
+                        string username = recv_str(sockfd);
+                        string passwd = recv_str(sockfd);
+                        cout<<"\033[1;36mTrying login with "<<username<<"/"<<passwd<<"\033[0m\n";
+                        if(database.has_user(username) != 0){
+                            if(!user_online(username, names, client_state)){
+                                send_str(sockfd, "0");
                                 client_state[i] = LOGGED_IN;
                                 names[i] = username;
-                                send_str(sockfd, "0");
                             }else{
                                 send_str(sockfd, "1");
                             }
-                    }else if(t == ""){
-
+                        }else{
+                            send_str(sockfd, "2");
+                        }
+                    }else if(c == "signup"){
+                        string username = recv_str(sockfd);
+                        string passwd = recv_str(sockfd);
+                        if(database.has_user(username) == 0){
+                            database.add_user(username);
+                            client_state[i] = LOGGED_IN;
+                            names[i] = username;
+                            send_str(sockfd, "0");
+                        }else{
+                            send_str(sockfd, "1");
+                        }
+                    }else if(c == "friends"){
+                        vector<string> friends_list = database.ls_friends(names[i]);
+                        string friends_list_string = "{\"friends\":[";
+                        for(int i=0;i<friends_list.size();i++){
+                            friends_list_string += "\"";
+                            friends_list_string += friends_list[i];
+                            friends_list_string += "\"";
+                            if(i!=friends_list.size()-1)friends_list_string += ",";
+                        }
+                        friends_list_string += "]}";
+                        send_str(sockfd, friends_list_string);
+                    }else if(c == "add"){
+                        string name_friend = recv_str(sockfd);
+                        if(database.has_user(name_friend) && !database.is_friends(names[i],name_friend)){
+                            database.add_friends(names[i], name_friend);
+                            send_str(sockfd, "0");
+                        }else{
+                            send_str(sockfd, "1");
+                        }
+                    }else if(c == "del"){
+                        string name_friend = recv_str(sockfd);
+                        if(database.is_friends(names[i],name_friend)){
+                            database.delete_friends(names[i], name_friend);
+                            send_str(sockfd, "0");
+                        }else{
+                            send_str(sockfd, "1");
+                        }
+                    }else if(c == "logout"){
+                        client_state[i] = NO_ONE;
+                        names[i] = "";
                     }
-                    /*switch(client_state[i]){
-                        case NO_ONE:
-                            if(c == "1"){
-                                send_str(sockfd, "You want to login\nInput your username below or type \"1\" to cancel: \n");
-                                client_state[i] = LOGGING_IN;
-                            }else if(c == "2"){
-                                send_str(sockfd, "You want to signup\nPlease choose your username below or type \"1\" to cancel: \n");
-                                client_state[i] = SIGNING_UP;
-                            }else if(c == "3"){
-                                send_str(sockfd, "You want to quit\n");
-                            }
-                            break;
-                        case LOGGING_IN:
-                            if(c == "1"){
-                                send_str(sockfd, "1. login\n2. signup\n3. quit\n");
-                                client_state[i] = NO_ONE;
-                            }else if(database.has_user(c) != 0){
-                                if(!user_online(c,names,client_state)){
-                                    send_str(sockfd, "Logged in\nType in commands or \"logout\" to logout.\n");
-                                    client_state[i] = LOGGED_IN;
-                                    names[i] = c;
-                                }else{
-                                    send_str(sockfd, "Failed. You are logged in somewhere else.\n1. login\n2. signup\n3. quit\n");
-                                    client_state[i] = NO_ONE;
-                                }
-                            }else{
-                                send_str(sockfd, "Failed. Username not found.\n1. login\n2. signup\n3. quit\n");
-                                client_state[i] = NO_ONE;
-                            }
-                            //request name
-                            //if option is cancel, state -> NO_ONE
-                            //else if name is valid and not already logged_in, state -> LOGGED_IN
-                            //else request again
-                            break;
-                        case LOGGED_IN:
-                            if(t == "logout"){
-                                send_str(sockfd, "Logged out.\n1. login\n2. signup\n3. quit\n");
-                                client_state[i] = NO_ONE;
-                            }else if(t == "whoami"){
-                                send_str(sockfd, "You are "+names[i]+".\n");
-                            }else if(t == "add"){
-                                c_ss >> t;
-                                if(database.has_user(t) == 0){
-                                    send_str(sockfd, "No user with that name.\n");
-                                }else{
-                                    database.add_friends(names[i], t);
-                                    send_str(sockfd, "Added '"+t+"' as friend.\n");
-                                }  
-                            }else if(t == "ls"){
-                                vector<string> friends_list = database.ls_friends(names[i]);
-                                string str="Your friends are: ";
-                                for(auto i : friends_list)str += i;
-                                str += "\n";
-                                send_str(sockfd, str);
-                            }
-                            break;
-                        case SIGNING_UP:
-                            if(c == "cancel"){
-                                send_str(sockfd, "1. login\n2. signup\n3. quit\n");
-                                client_state[i] = NO_ONE;
-                            }else if(database.has_user(t) == 0){
-                                send_str(sockfd, "Logged in\nType in commands or \"logout\" to logout.\n");
-                                client_state[i] = LOGGED_IN;
-                                database.add_user(c);
-                                names[i] = c;
-                            }else{
-                                send_str(sockfd, "Failed. Username used.\n1. login\n2. signup\n3. quit\n");
-                                client_state[i] = NO_ONE;
-                            }
-                            //request name
-                            //if option is cancel, state -> NO_ONE
-                            //else if name is valid, state -> LOGGED_IN
-                            //else request again
-                        default:
-                            break;
-                    }*/
                 }  
             }  
         }  

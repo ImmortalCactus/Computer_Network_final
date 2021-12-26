@@ -6,6 +6,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include "transfer.h"
 #include <algorithm>
@@ -40,14 +41,12 @@ int init_client(string IP_port){
     return sock;
 }
 
-int init_server(string port_s){
+int init_server(string port_s, struct sockaddr_in &address, int &addrlen){
     int port;
     stringstream port_ss(port_s);
     port_ss >> port;
     int server_fd, new_socket;
-    struct sockaddr_in address;
     int opt = 1;
-    int addrlen = sizeof(address);
        
     // Creating socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
@@ -57,8 +56,7 @@ int init_server(string port_s){
     }
        
     // Forcefully attaching socket to the port 8080
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                                                  &opt, sizeof(opt)))
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
     {
         perror("setsockopt");
         exit(EXIT_FAILURE);
@@ -68,8 +66,7 @@ int init_server(string port_s){
     address.sin_port = htons( port );
        
     // Forcefully attaching socket to the port 8080
-    if (bind(server_fd, (struct sockaddr *)&address, 
-                                 sizeof(address))<0)
+    if (bind(server_fd, (struct sockaddr *)&address,  sizeof(address))<0)
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
@@ -80,88 +77,145 @@ int init_server(string port_s){
         exit(EXIT_FAILURE);
     }
     cout<<"\033[1;32mWAITING FOR CONNECTION ON PORT "<<port<<"...\033[0m"<<endl;
-    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, 
-                       (socklen_t*)&addrlen))<0)
-    {
-        perror("accept");
-        exit(EXIT_FAILURE);
-    }
-    cout<<"\033[1;32mCONNECTED\033[0m"<<endl;
-    return new_socket;
+    return server_fd;
 }
 
 int main(int argc, char *argv[])
 {
     int logged_in = 0;
     int username;
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
     int serverfd = init_client(string(argv[1]));
-    int browserfd = init_server(string(argv[2]));
-    cout<<"BOTH CONNECTION INITIALIZED"<<endl;
+    int listenfd = init_server(string(argv[2]), address, addrlen);
+    int browserfd;
+    int browser_connected = 0;
+    cout<<"\033[1;32mSERVER CONNECTED\033[0m"<<endl;
+    cout<<"\033[1;36mLISTENING FOR BROWSER...\033[0m"<<endl;
     fd_set readfds;
     while(1){
         FD_ZERO(&readfds);
         FD_SET(serverfd, &readfds);
-        FD_SET(browserfd, &readfds);
-        int max_sd = max(serverfd, browserfd);
+        int max_sd;
+        if(browser_connected){
+            FD_SET(browserfd, &readfds);
+            max_sd = max(serverfd, browserfd);
+        }else{
+            FD_SET(listenfd, &readfds);
+            max_sd = max(serverfd, listenfd);
+        }
         int activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL); 
         if ((activity < 0) && (errno!=EINTR))printf("select error"); 
-
-        if(FD_ISSET(browserfd, &readfds)){
-            http_request r = get_http_request(browserfd);
-            cout<<"\033[1;36mREQUEST RECEIVED\033[0m"<<endl;
-            r.display();
-            if(logged_in == 0){
-                if(r.method == "POST"){
-                    if(r.action == "/login"){
-                        map<string, string> m = process_form_data(r.content);
-                        send_str(serverfd, "login "+m["username"]+" "+m["passwd"]);
-                        string res = recv_str(serverfd);
-                        if(res == "0"){
-                            logged_in = 1;
-                            cout<<"\033[1;32mLOGGED IN!!\033[0m"<<endl;
-                            send_http(browserfd, "./static/main.html", "text/html");
-                        }else{
-                            cout<<"\033[1;31mFAILED LOGIN!!\033[0m"<<endl;
-                            send_http(browserfd, "./static/login.html", "text/html");
+        
+        if(browser_connected && FD_ISSET(browserfd, &readfds)){
+            int valread;
+            char buffer[BUF_SIZE];
+            if ((valread = recv( browserfd , buffer, 1, MSG_PEEK | MSG_DONTWAIT)) == 0)
+            {  
+                close(browserfd);
+                cout<<"\033[1;31mBROWSER DISCONNECTED\033[0m"<<endl;
+                browser_connected = 0;  
+            }
+            else
+            {
+                http_request r = get_http_request(browserfd);
+                cout<<"\033[1;36mREQUEST RECEIVED\033[0m"<<endl;
+                r.display();
+                if(logged_in == 0){
+                    if(r.method == "POST"){
+                        if(r.action == "/login"){
+                            map<string, string> m = process_form_data(r.content);
+                            send_str(serverfd, "login");
+                            send_str(serverfd, m["username"]);
+                            send_str(serverfd, m["passwd"]);
+                            string res = recv_str(serverfd);
+                            if(res == "0"){
+                                logged_in = 1;
+                                cout<<"\033[1;32mLOGGED IN\033[0m"<<endl;
+                            }else{
+                                cout<<"\033[1;31mFAILED LOGIN\033[0m"<<endl;
+                            }
+                            send_redirect(browserfd, "/");
+                            
+                        }else if(r.action == "/signup"){
+                            map<string, string> m = process_form_data(r.content);
+                            send_str(serverfd, "signup");
+                            send_str(serverfd, m["username"]);
+                            send_str(serverfd, m["passwd"]);
+                            string res = recv_str(serverfd);
+                            if(res == "0"){
+                                logged_in = 1;
+                                cout<<"\033[1;32mACCOUNT CREATED\033[0m"<<endl;
+                            }else{
+                                cout<<"\033[1;31mFAILED SIGNUP\033[0m"<<endl;
+                            }
+                            send_redirect(browserfd, "/");
                         }
-                        /*string s = "HTTP/1.1 303 See Other\r\nLocation: wwsdfgsdfgsdgf\r\n\r\n";
-                        write(browserfd, s.c_str(), s.length());*/
-                        
-                    }else if(r.action == "/signup"){
-                        map<string, string> m = process_form_data(r.content);
-                        send_str(serverfd, "signup "+m["username"]+" "+m["passwd"]);
-                        string res = recv_str(serverfd);
-                        if(res == "0"){
-                            logged_in = 1;
-                            cout<<"\033[1;32mACCOUNT CREATED!!\033[0m"<<endl;
-                            send_http(browserfd, "./static/main.html", "text/html");
+                    }else if(r.method == "GET"){
+                        if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
+                            send_http(browserfd, "."+r.action, "image/png");
+                        }else if(r.action == "/signup"){
+                            send_http(browserfd, "./static/signup.html", "text/html");
+                        }else if(r.action.length()>=8 && r.action.substr(0,8)=="/static/"){
+                            send_http(browserfd, "."+r.action, "text/html");
                         }else{
-                            cout<<"\033[1;31mFAILED SIGNUP!!\033[0m"<<endl;
                             send_http(browserfd, "./static/login.html", "text/html");
                         }
                     }
-                }else if(r.method == "GET"){
-                    if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
-                        send_http(browserfd, "."+r.action, "image/png");
-                    }else if(r.action == "/signup"){
-                        send_http(browserfd, "./static/signup.html", "text/html");
-                    }else if(r.action.length()>=8 && r.action.substr(0,8)=="/static/"){
-                        send_http(browserfd, "."+r.action, "text/html");
-                    }else{
-                        send_http(browserfd, "./static/login.html", "text/html");
-                    }
-                }
-            }else{
-                if(r.method == "GET"){
-                    if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
-                        send_http(browserfd, "."+r.action, "image/png");
-                    }else if(r.action.length()>=8 && r.action.substr(0,8)=="/static/"){
-                        send_http(browserfd, "."+r.action, "text/html");
-                    }else{
-                        send_http(browserfd, "./static/main.html", "text/html");
+                }else{
+                    if(r.method == "GET"){
+                        if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
+                            send_http(browserfd, "."+r.action, "image/png");
+                        }else if(r.action == "/friends"){
+                            send_str(serverfd, "friends");
+                            string temp = recv_str(serverfd);
+                            ofstream temp_fstream;
+                            temp_fstream.open("./data/friends.json");
+                            temp_fstream << temp;
+                            temp_fstream.close();
+                            send_http(browserfd, "./data/friends.json", "text/html");
+                        }else{
+                            send_http(browserfd, "./static/main.html", "text/html");
+                        }
+                    }else if(r.method == "POST"){
+                        if(r.action == "/add"){
+                            map<string, string> m = process_form_data(r.content);
+                            send_str(serverfd, "add");
+                            send_str(serverfd, m["username"]);
+                            string res = recv_str(serverfd);
+                            if(res == "0"){
+                                cout<<"\033[1;32mADDED FRIEND "<<m["username"]<<"\033[0m"<<endl;
+                            }else{
+                                cout<<"\033[1;31mFRIEND "<<m["username"]<<" NOT ADDED\033[0m"<<endl;
+                            }
+                            send_redirect(browserfd, "/");
+                        }else if(r.action == "/del"){
+                            map<string, string> m = process_form_data(r.content);
+                            send_str(serverfd, "del");
+                            send_str(serverfd, m["username"]);
+                            string res = recv_str(serverfd);
+                            if(res == "0"){
+                                cout<<"\033[1;32mDELETED FRIEND "<<m["username"]<<"\033[0m"<<endl;
+                            }else{
+                                cout<<"\033[1;31mFAILED TO DELETE FRIEND "<<m["username"]<<"\033[0m"<<endl;
+                            }
+                            send_redirect(browserfd, "/");
+                        }else if(r.action == "/logout"){
+                            logged_in = 0;
+                            send_str(serverfd, "logout");
+                            send_redirect(browserfd, "/");
+                        }
                     }
                 }
             }
+        }
+        if(!browser_connected && FD_ISSET(listenfd, &readfds)){
+            int addrlen = sizeof(address);
+            if ((browserfd = accept(listenfd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){ 
+                exit(EXIT_FAILURE);  
+            }
+            browser_connected = 1;
+            cout<<"\033[1;32mBROWSER CONNECTED\033[0m"<<endl;
         }
     }
 

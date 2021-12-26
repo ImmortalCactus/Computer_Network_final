@@ -227,3 +227,13 @@ void send_http(int sockfd, string file, string type){
     fclose(fp);
     return;
 }
+
+void send_redirect(int sockfd, string url){
+    string http_str = "HTTP/1.1 303 See Other\r\nLocation: " + url + "\r\n\r\n";
+    int bytes_sent = 0;
+
+    while(bytes_sent < http_str.length()){
+        int n = write(sockfd, http_str.substr(bytes_sent).c_str(), http_str.length()-bytes_sent);
+        bytes_sent += n;
+    }
+}
