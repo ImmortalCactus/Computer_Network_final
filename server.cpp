@@ -102,15 +102,15 @@ int main(int argc , char *argv[])
 
     chat_db database;  
     database.init_db();
-    database.add_user("bbb");
-    database.add_user("aaa");
-    database.add_user("ccc");
-    database.add_user("ddd");
+    database.add_user("bbb", "bpass");
+    database.add_user("aaa", "apass");
+    database.add_user("ccc", "cpass");
+    database.add_user("ddd", "dpass");
     database.add_friends("aaa", "bbb");
     database.add_friends("aaa", "ddd");
-    database.add_chat_log("aaa", "bbb", TEXT, "Hello bbb, I am aaa.");
-    database.add_chat_log("bbb", "aaa", TEXT, "Hello aaa, Nice to meet you.");
-    database.add_chat_log("aaa", "bbb", TEXT, "This is nice.");
+    database.add_chat_log("aaa", "bbb", "text", "Hello bbb, I am aaa.");
+    database.add_chat_log("bbb", "aaa", "text", "Hello aaa, Nice to meet you.");
+    database.add_chat_log("aaa", "bbb", "text", "This is nice.");
     /*database.add_friends("aaa", "bbb");
     database.delete_friends("aaa", "bbb");*/
     while(1)  
@@ -204,7 +204,7 @@ int main(int argc , char *argv[])
                         string username = recv_str(sockfd);
                         string passwd = recv_str(sockfd);
                         cout<<"\033[1;36mTrying login with "<<username<<"/"<<passwd<<"\033[0m\n";
-                        if(database.has_user(username) != 0){
+                        if(database.login_verify(username, passwd) != 0){
                             if(!user_online(username, names, client_state)){
                                 send_str(sockfd, "0");
                                 client_state[i] = LOGGED_IN;
@@ -219,7 +219,7 @@ int main(int argc , char *argv[])
                         string username = recv_str(sockfd);
                         string passwd = recv_str(sockfd);
                         if(database.has_user(username) == 0){
-                            database.add_user(username);
+                            database.add_user(username, passwd);
                             client_state[i] = LOGGED_IN;
                             names[i] = username;
                             send_str(sockfd, "0");
@@ -256,6 +256,26 @@ int main(int argc , char *argv[])
                     }else if(c == "logout"){
                         client_state[i] = NO_ONE;
                         names[i] = "";
+                    }else if(c == "log"){
+                        string recver = recv_str(sockfd);
+                        cout<<"\033[1;36mFETCHING CHAT LOG WITH"<<names[i]<<" and "<<recver<<"\033[0m\n";
+                        vector<chat_log> log = database.get_chat_log(names[i], recver);
+                        string log_json = "{\"log\":[";
+                        for(int i=0;i<log.size();i++){
+                            log_json += "{\"sender\":\""+log[i].sender+"\",";
+                            log_json += "\"recver\":\""+log[i].recver+"\",";
+                            log_json += "\"type\":\""+log[i].message_type+"\",";
+                            log_json += "\"content\":\""+log[i].message_content+"\",";
+                            log_json += "\"timestamp\":\""+log[i].timestamp+"\"}";
+                            if(i!=log.size()-1)log_json += ",";
+                        }
+                        log_json += "]}";
+                        send_str(sockfd, log_json);
+                    }else if(c == "sendtext"){
+                        string recver = recv_str(sockfd);
+                        string text = recv_str(sockfd);
+                        database.add_chat_log(names[i], recver, "text", text);
+                        send_str(sockfd, "0");
                     }
                 }  
             }  

@@ -25,10 +25,12 @@
         .then(json => (function(x){
             var i;
             for(i=0;i<x["friends"].length;i++){
-                var node = document.createElement("LI");
+                var node = document.createElement("a");
+                node.href = `/chat/${x["friends"][i]}`;
                 var textnode = document.createTextNode(x["friends"][i]);  
                 node.appendChild(textnode);
                 friends_block.appendChild(node);
+                friends_block.appendChild(document.createElement("br"));
             }
         })(json));
     </script>

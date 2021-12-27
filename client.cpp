@@ -10,6 +10,7 @@
 #include <iostream>
 #include "transfer.h"
 #include <algorithm>
+#include <filesystem>
 
 #define BUF_SIZE 1024
 
@@ -121,7 +122,11 @@ int main(int argc, char *argv[])
                 http_request r = get_http_request(browserfd);
                 cout<<"\033[1;36mREQUEST RECEIVED\033[0m"<<endl;
                 r.display();
-                if(logged_in == 0){
+                if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
+                    send_http(browserfd, "."+r.action, "image/png");
+                }else if(r.action == "/favicon.ico"){
+                    send_http(browserfd, "./image/favicon.ico", "image/*");
+                }else if(logged_in == 0){
                     if(r.method == "POST"){
                         if(r.action == "/login"){
                             map<string, string> m = process_form_data(r.content);
@@ -152,9 +157,7 @@ int main(int argc, char *argv[])
                             send_redirect(browserfd, "/");
                         }
                     }else if(r.method == "GET"){
-                        if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
-                            send_http(browserfd, "."+r.action, "image/png");
-                        }else if(r.action == "/signup"){
+                        if(r.action == "/signup"){
                             send_http(browserfd, "./static/signup.html", "text/html");
                         }else if(r.action.length()>=8 && r.action.substr(0,8)=="/static/"){
                             send_http(browserfd, "."+r.action, "text/html");
@@ -164,9 +167,7 @@ int main(int argc, char *argv[])
                     }
                 }else{
                     if(r.method == "GET"){
-                        if(r.action.length() >= 7 && r.action.substr(0,7) == "/image/"){
-                            send_http(browserfd, "."+r.action, "image/png");
-                        }else if(r.action == "/friends"){
+                        if(r.action == "/friends"){
                             send_str(serverfd, "friends");
                             string temp = recv_str(serverfd);
                             ofstream temp_fstream;
@@ -174,6 +175,19 @@ int main(int argc, char *argv[])
                             temp_fstream << temp;
                             temp_fstream.close();
                             send_http(browserfd, "./data/friends.json", "text/html");
+                        }else if(r.action.length() >= 6 && r.action.substr(0,6) == "/chat/"){
+                            string recver = r.action.substr(6);
+                            send_http(browserfd, "./static/chatroom.html", "text/html");
+                        }else if(r.action.length() >= 5 && r.action.substr(0,5) == "/log/"){
+                            string recver = r.action.substr(5);
+                            send_str(serverfd, "log");
+                            send_str(serverfd, recver);
+                            string temp = recv_str(serverfd);
+                            ofstream temp_fstream;
+                            temp_fstream.open("./data/"+recver+".json");
+                            temp_fstream << temp;
+                            temp_fstream.close();
+                            send_http(browserfd, "./data/"+recver+".json", "text/html");
                         }else{
                             send_http(browserfd, "./static/main.html", "text/html");
                         }
@@ -202,8 +216,23 @@ int main(int argc, char *argv[])
                             send_redirect(browserfd, "/");
                         }else if(r.action == "/logout"){
                             logged_in = 0;
+                            for (const auto& entry : filesystem::directory_iterator("./data")){
+                                filesystem::remove_all(entry.path());
+                            }
                             send_str(serverfd, "logout");
                             send_redirect(browserfd, "/");
+                        }else if(r.action == "/sendtext"){
+                            map<string, string> m = process_form_data(r.content);
+                            send_str(serverfd, "sendtext");
+                            send_str(serverfd, m["recver"]);
+                            send_str(serverfd, m["text"]);
+                            string res = recv_str(serverfd);
+                            if(res == "0"){
+                                cout<<"\033[1;32mMESSAGE SENT\033[0m"<<endl;
+                            }else{
+                                cout<<"\033[1;31mMESSAGE NOT SENT\033[0m"<<endl;
+                            }
+                            send_redirect(browserfd, "/chat/"+m["recver"]);
                         }
                     }
                 }
