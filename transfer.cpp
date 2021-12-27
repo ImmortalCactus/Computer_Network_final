@@ -19,13 +19,13 @@ bool exists_test(const string& name){
     return (stat (name.c_str(), &buffer) == 0); 
 }
 
-void recv_file(int sockfd, const char* filename)
+void recv_file(int sockfd, string filename)
 {
     FILE *fp;
-    fp = fopen(filename, "wb");
+    fp = fopen(filename.c_str(), "wb");
     int size;
     read(sockfd, &size, sizeof(int));
-    //cout<<"should receive "<<size<<endl;
+    cout<<"should receive "<<size<<endl;
 
     char buffer[BUF_SIZE];
     int bytes_received = 0;
@@ -33,26 +33,26 @@ void recv_file(int sockfd, const char* filename)
     while(bytes_received < size){
         size_t cur_bytes_received;
         cur_bytes_received = read(sockfd, buffer, min(sizeof(buffer), (long unsigned int)(size-bytes_received)));
-        //cout<<"received "<<cur_bytes_received<<endl;
+        cout<<"received "<<cur_bytes_received<<endl;
         bytes_received += cur_bytes_received;
         fwrite(buffer, 1, cur_bytes_received, fp);
     }
     fclose(fp);
-    //cout<<"FINISHED RECV_FILE!\n";
+    cout<<"FINISHED RECV_FILE!\n";
     
 }
 
-void send_file(int sockfd,  const char* filename)
+void send_file(int sockfd,  string filename)
 {
     FILE *fp;
-    fp = fopen(filename, "rb");
+    fp = fopen(filename.c_str(), "rb");
     int size;
     struct stat st;
-    stat(filename, &st);
+    stat(filename.c_str(), &st);
     size = (int)st.st_size;
 
     write(sockfd, &size, sizeof(size));
-    //cout<<"should send "<<size<<endl;
+    cout<<"should send "<<size<<endl;
 
     char buffer[BUF_SIZE];
     int bytes_sent = 0, bytes_read;
@@ -63,7 +63,7 @@ void send_file(int sockfd,  const char* filename)
         size_t cur_bytes_sent = 0;
         while(cur_bytes_sent<bytes_read){
             int n = write(sockfd, buffer+cur_bytes_sent, bytes_read-cur_bytes_sent);
-            //cout<<"sent "<<n<<endl;
+            cout<<"sent "<<n<<endl;
             if(n==-1){
                 fclose(fp);
                 return;
@@ -73,7 +73,7 @@ void send_file(int sockfd,  const char* filename)
         bytes_sent += cur_bytes_sent;
     }
     fclose(fp);
-    //cout<<"FINISHED SEND_FILE!\n";
+    cout<<"FINISHED SEND_FILE!\n";
 }
 
 string recv_str(int sockfd){

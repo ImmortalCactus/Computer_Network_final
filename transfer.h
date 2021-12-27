@@ -15,8 +15,8 @@ public:
 };
 
 bool exists_test (const string& name);
-void recv_file(int sockfd, const char* filename);
-void send_file(int sockfd,  const char* filename);
+void recv_file(int sockfd, string filename);
+void send_file(int sockfd,  string filename);
 string recv_str(int sockfd);
 void send_str(int sockfd, const string& str);
 http_request get_http_request(int sockfd);

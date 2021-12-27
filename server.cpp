@@ -260,17 +260,20 @@ int main(int argc , char *argv[])
                         string recver = recv_str(sockfd);
                         cout<<"\033[1;36mFETCHING CHAT LOG WITH"<<names[i]<<" and "<<recver<<"\033[0m\n";
                         vector<chat_log> log = database.get_chat_log(names[i], recver);
-                        string log_json = "{\"log\":[";
+                        ofstream temp_fstream;
+                        temp_fstream.open("./server_dir/"+recver+".json");
+                        temp_fstream << "{\"log\":[";
                         for(int i=0;i<log.size();i++){
-                            log_json += "{\"sender\":\""+log[i].sender+"\",";
-                            log_json += "\"recver\":\""+log[i].recver+"\",";
-                            log_json += "\"type\":\""+log[i].message_type+"\",";
-                            log_json += "\"content\":\""+log[i].message_content+"\",";
-                            log_json += "\"timestamp\":\""+log[i].timestamp+"\"}";
-                            if(i!=log.size()-1)log_json += ",";
+                            temp_fstream << "{\"sender\":\""+log[i].sender+"\",";
+                            temp_fstream << "\"recver\":\""+log[i].recver+"\",";
+                            temp_fstream << "\"type\":\""+log[i].message_type+"\",";
+                            temp_fstream << "\"content\":\""+log[i].message_content+"\",";
+                            temp_fstream << "\"timestamp\":\""+log[i].timestamp+"\"}";
+                            if(i!=log.size()-1)temp_fstream <<  ",";
                         }
-                        log_json += "]}";
-                        send_str(sockfd, log_json);
+                        temp_fstream <<  "]}";
+                        temp_fstream.close();
+                        send_file(sockfd, "./server_dir/"+recver+".json");
                     }else if(c == "sendtext"){
                         string recver = recv_str(sockfd);
                         string text = recv_str(sockfd);

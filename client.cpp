@@ -182,11 +182,7 @@ int main(int argc, char *argv[])
                             string recver = r.action.substr(5);
                             send_str(serverfd, "log");
                             send_str(serverfd, recver);
-                            string temp = recv_str(serverfd);
-                            ofstream temp_fstream;
-                            temp_fstream.open("./data/"+recver+".json");
-                            temp_fstream << temp;
-                            temp_fstream.close();
+                            recv_file(serverfd, "./data/"+recver+".json");
                             send_http(browserfd, "./data/"+recver+".json", "text/html");
                         }else{
                             send_http(browserfd, "./static/main.html", "text/html");
