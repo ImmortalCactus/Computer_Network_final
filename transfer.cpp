@@ -149,7 +149,25 @@ http_request get_http_request(int sockfd){
             break;
         }
     }
-    if(ret.headers.count("content-length")!=0){
+    if(ret.headers["content-type"].substr(0,21) == "multipart/form-data; "){
+        FILE *fp;
+        fp = fopen("./data/temp", "wb");
+
+        char buffer[BUF_SIZE];
+        int bytes_received = 0;
+        int content_length;
+        stringstream i_ss(ret.headers["content-length"]);
+        i_ss >> content_length;
+
+        while(bytes_received < content_length){
+            size_t cur_bytes_received;
+            cur_bytes_received = read(sockfd, buffer, min(sizeof(buffer), (long unsigned int)(content_length-bytes_received)));
+            cout<<"received "<<cur_bytes_received<<endl;
+            bytes_received += cur_bytes_received;
+            fwrite(buffer, 1, cur_bytes_received, fp);
+        }
+        fclose(fp);
+    }else if(ret.headers.count("content-length")!=0){
         int content_length;
         stringstream i_ss(ret.headers["content-length"]);
         i_ss >> content_length;
@@ -163,6 +181,7 @@ http_request get_http_request(int sockfd){
     }else{
         ret.content = "";
     }
+    
     return ret;
 }
 

@@ -14,6 +14,8 @@ public:
     void display();
 };
 
+string stringtolower(string s);
+
 bool exists_test (const string& name);
 void recv_file(int sockfd, string filename);
 void send_file(int sockfd,  string filename);

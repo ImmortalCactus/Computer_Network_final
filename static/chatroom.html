@@ -8,25 +8,43 @@
         </div>
         <form method="post" id="sendtext" action="/sendtext">
             <label for="text">Send text:</label><br>
-            <input type="text" name="text"><br>
+            <input type="text" name="text">
             <input type="submit" value="Send">
             <input type="hidden" name="recver"/>
         </form>
+        <form method="post" id="sendimage" action="/sendimage">
+            <label for="img">Select image:</label><br>
+            <input type="file" id="img-selector" name="img" accept="image/*">
+            <input type="submit" value="Send">
+            <input type="hidden" name="recver"/>
+        </form>
+        <form id="sendimage" enctype="multipart/form-data" method="post" action="/sendimage">
+            <input id="fileupload" name="myfile" type="file" />
+            <input type="submit" value="submit" id="submit" />
+         </form>
     </body>
     <script>
         var u = document.getElementById('user');
         var chat = document.getElementById('chat');
         u.innerText = window.location.pathname.split('/')[2];
         document.getElementById("sendtext").elements["recver"].value=u.innerText;
+        document.getElementById("sendimage").elements["recver"].value=u.innerText;
+
+        
         fetch("/log/"+u.innerText)
         .then(response => response.json())
         .then(json => (function(x){
             var i;
             for(i=0;i<x["log"].length;i++){
-                var node = document.createElement("p");
+                
                 let t = x["log"][i];
-                var textnode = document.createTextNode(`${t['sender']}->${t['recver']}: (${t['type']}) ${decodeURIComponent(t['content'].replace(/\+/g, " "))} -- ${t['timestamp']}`);  
-                node.appendChild(textnode);
+                if(t["type"]=="text"){
+                    var node = document.createElement("p");
+                    var textnode = document.createTextNode(`${t['sender']}->${t['recver']}: (${t['type']}) ${decodeURIComponent(t['content'].replace(/\+/g, " "))} -- ${t['timestamp']}`);  
+                    node.appendChild(textnode);
+                }else{
+
+                }
                 chat.appendChild(node);
             }
         })(json));

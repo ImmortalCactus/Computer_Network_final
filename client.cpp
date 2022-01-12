@@ -229,6 +229,35 @@ int main(int argc, char *argv[])
                                 cout<<"\033[1;31mMESSAGE NOT SENT\033[0m"<<endl;
                             }
                             send_redirect(browserfd, "/chat/"+m["recver"]);
+                        }else if(r.action == "/sendimage"){
+                            map<string, string> m = process_form_data(r.content);
+                            ifstream temp_fstream;
+                            temp_fstream.open("./data/temp");
+                            string boundary;
+                            getline(temp_fstream, boundary);
+                            cout<<boundary<<boundary<<endl;
+                            string extension;
+                            while(!temp_fstream.eof()){
+                                string s;
+                                getline(temp_fstream, s);
+                                if(stringtolower(s.substr(0,14))=="content-type: "){
+                                    extension = s.substr(s.find("/")+1);
+                                }
+                                if(s == "")break;
+                            }
+                            ofstream temp_ofstream;
+                            temp_ofstream.open("temp."+extension);
+                            while(!temp_fstream.eof()){
+                                string s;
+                                getline(temp_fstream, s);
+                                if(s == boundary + "--"){
+                                    temp_fstream.close();
+                                    break;
+                                }else{
+
+                                }
+                            }
+                            send_redirect(browserfd, "/chat/"+m["recver"]);
                         }
                     }
                 }
