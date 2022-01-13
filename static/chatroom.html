@@ -14,51 +14,68 @@
         </form>
         <form method="post" id="sendfile" action="/sendfile">
             <label for="text">Send file:</label><br>
-            <select name="files_select" id="files">
+            <select name="filename" id="files">
 
             </select>
-            <input type="hidden" name="recver"/>
+            <input type="hidden" name="recver">
             <input type="submit" value="Send">
+        </form>
+        <form method="post" id="download" action="/download">
+            <input type="hidden" name="unique">
+            <input type="hidden" name="filename">
+            <input type="hidden" name="recver">
         </form>
     </body>
     <script>
         var u = document.getElementById('user');
         var chat = document.getElementById('chat');
+        var files_block = document.getElementById('files');
         u.innerText = window.location.pathname.split('/')[2];
         document.getElementById("sendtext").elements["recver"].value=u.innerText;
         document.getElementById("sendfile").elements["recver"].value=u.innerText;
-        
-        
-        fetch("/log/"+u.innerText)
+        document.getElementById("download").elements["recver"].value=u.innerText;
+        const log = fetch("/log/"+u.innerText)
         .then(response => response.json())
         .then(json => (function(x){
             var i;
             for(i=0;i<x["log"].length;i++){
                 
                 let t = x["log"][i];
-                if(t["type"]=="text"){
-                    var node = document.createElement("p");
+                var node = document.createElement("div");
+                if(t['type']=='text'){
                     var textnode = document.createTextNode(`${t['sender']}->${t['recver']}: (${t['type']}) ${decodeURIComponent(t['content'].replace(/\+/g, " "))} -- ${t['timestamp']}`);  
                     node.appendChild(textnode);
-                }else{
-
+                }else if(t['type']=='file'){
+                    var textnode = document.createTextNode(`${t['sender']}->${t['recver']}: (${t['type']}) ${decodeURIComponent(t['content'].replace(/\+/g, " "))} saved in server as ${t['filename']} -- ${t['timestamp']}`);
+                    var button = document.createElement("button");
+                    button.innerText = "Download";
+                    
+                    button.onclick = function(){
+                        var d = document.getElementById("download");
+                        d.elements["unique"].value = t['filename'];
+                        d.elements["filename"].value = t['content'];
+                        d.submit();
+                    }
+                    node.appendChild(textnode);
+                    node.appendChild(button);
                 }
                 chat.appendChild(node);
             }
-        })(json));
+        })(json))
 
-        var files_block = document.getElementById('files');
-        fetch("/files")
-        .then(response => response.json())
-        .then(json => (function(x){
-            var i;
-            for(i=0;i<x["files"].length;i++){
-                var node = document.createElement("option");
-                node.value = x["files"][i];
-                var textnode = document.createTextNode(x["files"][i]);  
-                node.appendChild(textnode);
-                files_block.appendChild(node);
-            }
-        })(json));
+        log.then(
+            x => {fetch("/files")
+            .then(response => response.json())
+            .then(json => (function(x){
+                var i;
+                for(i=0;i<x["files"].length;i++){
+                    var node = document.createElement("option");
+                    node.value = x["files"][i];
+                    var textnode = document.createTextNode(x["files"][i]);  
+                    node.appendChild(textnode);
+                    files_block.appendChild(node);
+                }
+            })(json))}
+        )
     </script>
 </html>

@@ -39,7 +39,8 @@ void chat_db::init_db(){
                 "RECVER TEXT NOT NULL,"
                 "TIMESTAMP DATETIME DEFAULT CURRENT_TIMESTAMP,"
                 "MSGTYPE TEXT NOT NULL,"
-                "CONTENT TEXT);";
+                "CONTENT TEXT,"
+                "FILENAME TEXT);";
     rc = sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
     if( rc != SQLITE_OK ){
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -171,9 +172,10 @@ vector<string> chat_db::ls_friends(string user){
     return v;
 }
 
-void chat_db::add_chat_log(string sender, string recver, string message_type, string message_content){
+void chat_db::add_chat_log(string sender, string recver, string message_type, string message_content, string filename){
     char *zErrMsg = 0;
-    string sql = "insert into CHAT_HISTORY (SENDER, RECVER, MSGTYPE, CONTENT) values ('" + sender + "','" + recver + "','" + message_type + "','" + message_content + "');";
+    string sql = "insert into CHAT_HISTORY (SENDER, RECVER, MSGTYPE, CONTENT, FILENAME) values ('" + sender + "','" + recver + "','" + message_type + "','" + message_content + "','" + filename + "');";
+    cout<<sender<<" to "<<recver<<" : "<<message_content<<endl;
     int rc = sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
     if( rc != SQLITE_OK ){
         fprintf(stderr, "SQL error: %s\n", zErrMsg);
@@ -193,6 +195,7 @@ vector<chat_log> chat_db::get_chat_log(string user1, string user2){
         temp.timestamp = string(argv[2]);
         temp.message_type = string(argv[3]);
         temp.message_content = string(argv[4]);
+        temp.filename = string(argv[5]);
         (*(vector<chat_log> *)data).push_back(temp);
         return 0;
     };
@@ -208,6 +211,6 @@ vector<chat_log> chat_db::get_chat_log(string user1, string user2){
 }
 
 void chat_log::formatted_display(){
-    cout<<sender<<"->"<<recver<<"("<<message_type<<"): '"<<message_content<<"' --- at "<<timestamp<<endl;
+    cout<<sender<<"->"<<recver<<"("<<message_type<<"): '"<<message_content<< " : local name is " << filename <<"' --- at "<<timestamp<<endl;
 }
 

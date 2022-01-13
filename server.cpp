@@ -16,6 +16,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <chrono>
 #include "transfer.h"
 #include "data_managing.h"
 
@@ -109,11 +110,9 @@ int main(int argc , char *argv[])
     database.add_user("ddd", "dpass");
     database.add_friends("aaa", "bbb");
     database.add_friends("aaa", "ddd");
-    database.add_chat_log("aaa", "bbb", "text", "Hello bbb, I am aaa.");
-    database.add_chat_log("bbb", "aaa", "text", "Hello aaa, Nice to meet you.");
-    database.add_chat_log("aaa", "bbb", "text", "This is nice.");
-    database.add_friends("aaa", "bbb");
-    database.delete_friends("aaa", "bbb");*/
+    database.add_chat_log("aaa", "bbb", "text", "Hello bbb, I am aaa.", "");
+    database.add_chat_log("bbb", "aaa", "text", "Hello aaa, Nice to meet you.", "");
+    database.add_chat_log("aaa", "bbb", "text", "This is nice.", "");*/
     while(1)  
     {  
         //clear the socket set 
@@ -270,6 +269,7 @@ int main(int argc , char *argv[])
                             temp_fstream << "\"recver\":\""+log[i].recver+"\",";
                             temp_fstream << "\"type\":\""+log[i].message_type+"\",";
                             temp_fstream << "\"content\":\""+log[i].message_content+"\",";
+                            temp_fstream << "\"filename\":\""+log[i].filename+"\",";
                             temp_fstream << "\"timestamp\":\""+log[i].timestamp+"\"}";
                             if(i!=log.size()-1)temp_fstream <<  ",";
                         }
@@ -279,8 +279,21 @@ int main(int argc , char *argv[])
                     }else if(c == "sendtext"){
                         string recver = recv_str(sockfd);
                         string text = recv_str(sockfd);
-                        database.add_chat_log(names[i], recver, "text", text);
+                        database.add_chat_log(names[i], recver, "text", text, "");
                         send_str(sockfd, "0");
+                    }else if(c == "sendfile"){
+                        string recver = recv_str(sockfd);
+                        string filename = recv_str(sockfd);
+                        //get time so that the filename is unique
+                        const auto p1 = std::chrono::system_clock::now();
+                        auto t = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
+
+                        string unique_name = names[i]+"_"+recver+"_"+to_string(t);
+                        database.add_chat_log(names[i], recver, "file", filename, unique_name);
+                        recv_file(sockfd, "./server_dir/files/"+unique_name);
+                    }else if(c == "download"){
+                        string unique = recv_str(sockfd);
+                        send_file(sockfd, "./server_dir/files/"+unique);
                     }
                 }  
             }  

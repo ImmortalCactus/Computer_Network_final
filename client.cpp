@@ -256,13 +256,19 @@ int main(int argc, char *argv[])
                             send_str(serverfd, "sendfile");
                             send_str(serverfd, m["recver"]);
                             send_str(serverfd, m["filename"]);
-                            send_file(serverfd, m["filename"]);
-                            
+                            send_file(serverfd, "./client_dir/"+m["filename"]);
+
                             send_redirect(browserfd, "/chat/"+m["recver"]);
                         }else if(r.action == "/download"){
                             //get file name
                             //if file is not in client_dir, get file from server
                             //send Refresh response
+                            map<string, string> m = process_form_data(r.content);
+                            send_str(serverfd, "download");
+                            send_str(serverfd, m["unique"]);
+                            recv_file(serverfd, "./client_dir/"+m["filename"]);
+                            
+                            send_redirect(browserfd, "/chat/"+m["recver"]);
                         }
                     }
                 }

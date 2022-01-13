@@ -10,6 +10,7 @@ public:
     string recver;
     string message_type;
     string message_content;
+    string filename;
     void formatted_display();
 };
 class chat_db {
@@ -23,6 +24,6 @@ public:
     void delete_friends(string, string);
     int is_friends(string, string);
     vector<string> ls_friends(string);
-    void add_chat_log(string, string, string, string);
+    void add_chat_log(string, string, string, string, string);
     vector<chat_log> get_chat_log(string, string);
 };
