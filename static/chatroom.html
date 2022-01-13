@@ -12,24 +12,22 @@
             <input type="submit" value="Send">
             <input type="hidden" name="recver"/>
         </form>
-        <form method="post" id="sendimage" action="/sendimage">
-            <label for="img">Select image:</label><br>
-            <input type="file" id="img-selector" name="img" accept="image/*">
-            <input type="submit" value="Send">
+        <form method="post" id="sendfile" action="/sendfile">
+            <label for="text">Send file:</label><br>
+            <select name="files_select" id="files">
+
+            </select>
             <input type="hidden" name="recver"/>
+            <input type="submit" value="Send">
         </form>
-        <form id="sendimage" enctype="multipart/form-data" method="post" action="/sendimage">
-            <input id="fileupload" name="myfile" type="file" />
-            <input type="submit" value="submit" id="submit" />
-         </form>
     </body>
     <script>
         var u = document.getElementById('user');
         var chat = document.getElementById('chat');
         u.innerText = window.location.pathname.split('/')[2];
         document.getElementById("sendtext").elements["recver"].value=u.innerText;
-        document.getElementById("sendimage").elements["recver"].value=u.innerText;
-
+        document.getElementById("sendfile").elements["recver"].value=u.innerText;
+        
         
         fetch("/log/"+u.innerText)
         .then(response => response.json())
@@ -46,6 +44,20 @@
 
                 }
                 chat.appendChild(node);
+            }
+        })(json));
+
+        var files_block = document.getElementById('files');
+        fetch("/files")
+        .then(response => response.json())
+        .then(json => (function(x){
+            var i;
+            for(i=0;i<x["files"].length;i++){
+                var node = document.createElement("option");
+                node.value = x["files"][i];
+                var textnode = document.createTextNode(x["files"][i]);  
+                node.appendChild(textnode);
+                files_block.appendChild(node);
             }
         })(json));
     </script>

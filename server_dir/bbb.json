@@ -1,1 +1,0 @@
-{"log":[{"sender":"aaa","recver":"bbb","type":"text","content":"Hello bbb, I am aaa.","timestamp":"2021-12-27 11:58:51"},{"sender":"bbb","recver":"aaa","type":"text","content":"Hello aaa, Nice to meet you.","timestamp":"2021-12-27 11:58:51"},{"sender":"aaa","recver":"bbb","type":"text","content":"This is nice.","timestamp":"2021-12-27 11:58:51"}]}

@@ -15,7 +15,7 @@
 #define BUF_SIZE 1024
 
 using namespace std;
-
+namespace fs = std::filesystem;
 
 int init_client(string IP_port){
     int sock;
@@ -169,11 +169,7 @@ int main(int argc, char *argv[])
                     if(r.method == "GET"){
                         if(r.action == "/friends"){
                             send_str(serverfd, "friends");
-                            string temp = recv_str(serverfd);
-                            ofstream temp_fstream;
-                            temp_fstream.open("./data/friends.json");
-                            temp_fstream << temp;
-                            temp_fstream.close();
+                            recv_file(serverfd, "./data/friends.json");
                             send_http(browserfd, "./data/friends.json", "text/html");
                         }else if(r.action.length() >= 6 && r.action.substr(0,6) == "/chat/"){
                             string recver = r.action.substr(6);
@@ -184,6 +180,29 @@ int main(int argc, char *argv[])
                             send_str(serverfd, recver);
                             recv_file(serverfd, "./data/"+recver+".json");
                             send_http(browserfd, "./data/"+recver+".json", "text/html");
+                        }else if(r.action == "/files"){
+                            //similiar to /friends
+                            //but no need for communication with server
+                            //just send json locally
+                            vector<string> files_list;
+                        
+                            string path = "./client_dir";
+                            for (const auto & entry : fs::directory_iterator(path)){
+                                string path_s = entry.path();
+                                string file_s = path_s.substr(path_s.find_last_of("/")+1);
+                                files_list.push_back(file_s);
+                            }
+                            ofstream temp_fstream;
+                            temp_fstream.open("./data/files.json");
+                            temp_fstream << "{\"files\":[";
+                            for(int i=0;i<files_list.size();i++){
+                                temp_fstream << "\"" << files_list[i] << "\"";
+                                if(i!=files_list.size()-1)temp_fstream << ",";
+                            }
+                            temp_fstream << "]}";
+                            temp_fstream.close();
+                            send_http(browserfd, "./data/files.json", "text/html");
+                                
                         }else{
                             send_http(browserfd, "./static/main.html", "text/html");
                         }
@@ -229,35 +248,21 @@ int main(int argc, char *argv[])
                                 cout<<"\033[1;31mMESSAGE NOT SENT\033[0m"<<endl;
                             }
                             send_redirect(browserfd, "/chat/"+m["recver"]);
-                        }else if(r.action == "/sendimage"){
+                        }else if(r.action == "/sendfile"){
+                            //get file name
+                            //create thread to send_file() to server
+                            //send Refresh response to browser
                             map<string, string> m = process_form_data(r.content);
-                            ifstream temp_fstream;
-                            temp_fstream.open("./data/temp");
-                            string boundary;
-                            getline(temp_fstream, boundary);
-                            cout<<boundary<<boundary<<endl;
-                            string extension;
-                            while(!temp_fstream.eof()){
-                                string s;
-                                getline(temp_fstream, s);
-                                if(stringtolower(s.substr(0,14))=="content-type: "){
-                                    extension = s.substr(s.find("/")+1);
-                                }
-                                if(s == "")break;
-                            }
-                            ofstream temp_ofstream;
-                            temp_ofstream.open("temp."+extension);
-                            while(!temp_fstream.eof()){
-                                string s;
-                                getline(temp_fstream, s);
-                                if(s == boundary + "--"){
-                                    temp_fstream.close();
-                                    break;
-                                }else{
-
-                                }
-                            }
+                            send_str(serverfd, "sendfile");
+                            send_str(serverfd, m["recver"]);
+                            send_str(serverfd, m["filename"]);
+                            send_file(serverfd, m["filename"]);
+                            
                             send_redirect(browserfd, "/chat/"+m["recver"]);
+                        }else if(r.action == "/download"){
+                            //get file name
+                            //if file is not in client_dir, get file from server
+                            //send Refresh response
                         }
                     }
                 }

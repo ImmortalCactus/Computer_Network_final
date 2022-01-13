@@ -102,6 +102,7 @@ int main(int argc , char *argv[])
 
     chat_db database;  
     database.init_db();
+    /*
     database.add_user("bbb", "bpass");
     database.add_user("aaa", "apass");
     database.add_user("ccc", "cpass");
@@ -111,7 +112,7 @@ int main(int argc , char *argv[])
     database.add_chat_log("aaa", "bbb", "text", "Hello bbb, I am aaa.");
     database.add_chat_log("bbb", "aaa", "text", "Hello aaa, Nice to meet you.");
     database.add_chat_log("aaa", "bbb", "text", "This is nice.");
-    /*database.add_friends("aaa", "bbb");
+    database.add_friends("aaa", "bbb");
     database.delete_friends("aaa", "bbb");*/
     while(1)  
     {  
@@ -228,15 +229,16 @@ int main(int argc , char *argv[])
                         }
                     }else if(c == "friends"){
                         vector<string> friends_list = database.ls_friends(names[i]);
-                        string friends_list_string = "{\"friends\":[";
+                        ofstream temp_fstream;
+                        temp_fstream.open("./server_dir/"+names[i]+"_friends.json");
+                        temp_fstream << "{\"friends\":[";
                         for(int i=0;i<friends_list.size();i++){
-                            friends_list_string += "\"";
-                            friends_list_string += friends_list[i];
-                            friends_list_string += "\"";
-                            if(i!=friends_list.size()-1)friends_list_string += ",";
+                            temp_fstream << "\"" << friends_list[i] << "\"";
+                            if(i!=friends_list.size()-1)temp_fstream << ",";
                         }
-                        friends_list_string += "]}";
-                        send_str(sockfd, friends_list_string);
+                        temp_fstream << "]}";
+                        temp_fstream.close();
+                        send_file(sockfd, "./server_dir/"+names[i]+"_friends.json");
                     }else if(c == "add"){
                         string name_friend = recv_str(sockfd);
                         if(database.has_user(name_friend) && !database.is_friends(names[i],name_friend)){
@@ -261,7 +263,7 @@ int main(int argc , char *argv[])
                         cout<<"\033[1;36mFETCHING CHAT LOG WITH"<<names[i]<<" and "<<recver<<"\033[0m\n";
                         vector<chat_log> log = database.get_chat_log(names[i], recver);
                         ofstream temp_fstream;
-                        temp_fstream.open("./server_dir/"+recver+".json");
+                        temp_fstream.open("./server_dir/"+names[i]+"_"+recver+".json");
                         temp_fstream << "{\"log\":[";
                         for(int i=0;i<log.size();i++){
                             temp_fstream << "{\"sender\":\""+log[i].sender+"\",";
@@ -273,7 +275,7 @@ int main(int argc , char *argv[])
                         }
                         temp_fstream <<  "]}";
                         temp_fstream.close();
-                        send_file(sockfd, "./server_dir/"+recver+".json");
+                        send_file(sockfd, "./server_dir/"+names[i]+"_"+recver+".json");
                     }else if(c == "sendtext"){
                         string recver = recv_str(sockfd);
                         string text = recv_str(sockfd);

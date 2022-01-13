@@ -1,5 +1,7 @@
 chat.db
 sqlite3.o
-data/friends.json
 client
 server
+server_dir/*
+client_dir/*
+data/*
