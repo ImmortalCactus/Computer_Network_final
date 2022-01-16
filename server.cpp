@@ -308,6 +308,11 @@ int main(int argc , char *argv[])
                         send_file(sockfd, "./server_dir/files/"+unique);
                         //thread t(send_file, sockfd, "./server_dir/files/"+unique);
                         //t.detach();
+                    }else if(c == "delmsg"){
+                        string recver = recv_str(sockfd);
+                        string timestamp = recv_str(sockfd);
+                        database.delete_chat_log(names[i], recver, timestamp);
+                        cout<<"\033[1;36mDELETING MESSAGE"<<names[i]<<"->"<<recver<<"at"<<timestamp<<"\033[0m"<<endl;
                     }
                 }  
             }  

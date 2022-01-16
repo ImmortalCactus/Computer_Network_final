@@ -1,16 +1,16 @@
 <html>
     <body>
-        <h1>You are logged in.</h1>
+        <h1>&#127968;Home</h1>
         <div id="friends">
 
         </div>
         <form method="post" action="/add">
-            <label for="username">Add Friends with their name:</label><br>
+            <label for="username">Add a Friend with Their Name:</label><br>
             <input type="text" id="username" name="username"><br>
             <input type="submit" value="Add">
         </form>
         <form method="post" action="/del">
-            <label for="username">Delete Friends with their name:</label><br>
+            <label for="username">Delete a Friend with Their Name:</label><br>
             <input type="text" id="username" name="username"><br>
             <input type="submit" value="Delete">
         </form>
@@ -34,4 +34,27 @@
             }
         })(json));
     </script>
+    <style>
+        body {
+            background-color: black;
+        }
+        h1 {
+            font-size: 50px;
+            font-family: "Consolas";
+            color: whitesmoke;
+        }
+        a {
+            font-size: 40px;
+            color: green;
+        }
+        label {
+            font-size: 30px;
+            font-family: "Consolas";
+            color: whitesmoke;
+        }
+        form {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
 </html>

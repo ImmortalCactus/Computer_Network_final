@@ -81,6 +81,23 @@ int init_server(string port_s, struct sockaddr_in &address, int &addrlen){
     return server_fd;
 }
 
+string p3A(string s)
+{
+	string ret;
+	for (int i = 0; i < s.length(); ++i)
+	{
+		if (i + 2 < s.length())
+			if (s[i] == '%' && s[i + 1] == '3' && s[i + 2] == 'A')
+			{
+				i += 2;
+				ret += ':';
+				continue;
+			}
+		ret += s[i];
+	}
+	return ret;
+}
+
 int main(int argc, char *argv[])
 {
     mkdir("./data", S_IRWXU);
@@ -209,9 +226,9 @@ int main(int argc, char *argv[])
                             cout<<"downloading "<<unique<<endl;
                             send_str(serverfd, "download");
                             send_str(serverfd, unique);
-                            recv_file(serverfd, "./client_dir/temp");
+                            recv_file(serverfd, "./data/temp");
                             
-                            send_http(browserfd, "./client_dir/temp", "text/html");
+                            send_http(browserfd, "./data/temp", "text/html");
                         }else{
                             send_http(browserfd, "./static/main.html", "text/html");
                         }
@@ -258,17 +275,6 @@ int main(int argc, char *argv[])
                                 cout<<"\033[1;31mMESSAGE NOT SENT\033[0m"<<endl;
                             }
                             send_redirect(browserfd, "/chat/"+recver);
-                        }else if(r.action == "/sendfile"){
-                            //get file name
-                            //create thread to send_file() to server
-                            //send Refresh response to browser
-                            map<string, string> m = process_form_data(r.content);
-                            send_str(serverfd, "sendfile");
-                            send_str(serverfd, m["recver"]);
-                            send_str(serverfd, m["filename"]);
-                            send_file(serverfd, "./client_dir/"+m["filename"]);
-
-                            send_redirect(browserfd, "/chat/"+m["recver"]);
                         }else if(r.action == "/sendfile2"){
                             //get file name
                             //create thread to send_file() to server
@@ -278,6 +284,14 @@ int main(int argc, char *argv[])
                             send_str(serverfd, recver);
                             send_str(serverfd, r.headers["_filename"]);
                             send_file(serverfd, "./data/tmp");
+
+                            send_redirect(browserfd, "/chat/"+recver);
+                        }else if(r.action == "/delmsg"){
+                            map<string, string> m = process_form_data(r.content);
+                            send_str(serverfd, "delmsg");
+                            string recver = r.headers["referer"].substr(r.headers["referer"].find_last_of("/")+1);
+                            send_str(serverfd, recver);
+                            send_str(serverfd, p3A(m["timestamp"]));
 
                             send_redirect(browserfd, "/chat/"+recver);
                         }

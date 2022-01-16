@@ -26,4 +26,5 @@ public:
     vector<string> ls_friends(string);
     void add_chat_log(string, string, string, string, string);
     vector<chat_log> get_chat_log(string, string);
+    void delete_chat_log(string, string, string);
 };

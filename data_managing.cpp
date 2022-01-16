@@ -210,6 +210,18 @@ vector<chat_log> chat_db::get_chat_log(string user1, string user2){
     return ret;
 }
 
+void chat_db::delete_chat_log(string sender, string recver, string timestamp){
+    char *zErrMsg = 0;
+    string sql = "delete from CHAT_HISTORY where SENDER = '" + sender +"' and RECVER = '" + recver + "' and TIMESTAMP = '" + timestamp + "';";
+    int rc = sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
+    if( rc != SQLITE_OK ){
+        fprintf(stderr, "SQL error: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }else{
+        fprintf(stdout, "Operation done successfully\n");
+    }
+}
+
 void chat_log::formatted_display(){
     cout<<sender<<"->"<<recver<<"("<<message_type<<"): '"<<message_content<< " : local name is " << filename <<"' --- at "<<timestamp<<endl;
 }
