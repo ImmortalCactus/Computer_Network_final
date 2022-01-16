@@ -83,6 +83,7 @@ int init_server(string port_s, struct sockaddr_in &address, int &addrlen){
 
 int main(int argc, char *argv[])
 {
+    mkdir("./data", S_IRWXU);
     int logged_in = 0;
     int username;
     struct sockaddr_in address;

@@ -39,6 +39,10 @@ bool user_online(string user, string names[], state client_state[]){
 
 int main(int argc , char *argv[])  
 {  
+    mkdir("./server_dir", S_IRWXU);
+    mkdir("./server_dir/files", S_IRWXU);
+    mkdir("./server_dir/json", S_IRWXU);
+
     int opt = 1;  
     int master_socket , addrlen , new_socket , client_socket[MAX_CLI], activity, i , valread;
     state client_state[MAX_CLI];
