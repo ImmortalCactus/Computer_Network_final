@@ -113,7 +113,7 @@ string stringtolower(string s){
     return temp;
 }
 
-void parse()
+string parse()
 {
     ifstream fin; fin.open("data/temp", std::ifstream::binary);
     ofstream fout; fout.open("data/tmp", std::ofstream::binary);
@@ -129,11 +129,27 @@ void parse()
     for (int i = 3; i < v.size(); ++i)
         if (v[i - 3] == 13 && v[i - 2] == 10 && v[i - 1] == 13 && v[i] == 10)
             { l = i + 1; break; }
+    int ll;
+    for (ll = 7; ; ++ll)
+    {
+        string s = "filename";
+        bool ok = true;
+        for (int i = 0; i < 8; ++i) if (v[ll - 7 + i] != s[i])
+            ok = false;
+        if (ok) break;
+    }
+    string ret;
+    for (int i = ll + 2; ; ++i)
+    {
+        if (v[i] == '\"') break;
+        ret += v[i];
+    }
     for (int i = v.size() - 1; i >= 0; --i)
         if (v[i] == 10 && v[i - 1] == 13)
             { r = i - 2; break; }
     for (int i = l; i <= r; ++i)
         fout.write(&v[i], 1);
+    return ret;
 }
 
 http_request get_http_request(int sockfd){
@@ -191,7 +207,7 @@ http_request get_http_request(int sockfd){
         }
         fclose(fp);
 
-        parse();
+        cout<<"FILENAME: "<<parse()<<endl;
     }else if(ret.headers.count("content-length")!=0){
         int content_length;
         stringstream i_ss(ret.headers["content-length"]);
