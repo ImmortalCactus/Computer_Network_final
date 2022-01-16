@@ -247,7 +247,8 @@ int main(int argc, char *argv[])
                         }else if(r.action == "/sendtext"){
                             map<string, string> m = process_form_data(r.content);
                             send_str(serverfd, "sendtext");
-                            send_str(serverfd, m["recver"]);
+                            string recver = r.headers["referer"].substr(r.headers["referer"].find_last_of("/")+1);
+                            send_str(serverfd, recver);
                             send_str(serverfd, m["text"]);
                             string res = recv_str(serverfd);
                             if(res == "0"){
@@ -255,7 +256,7 @@ int main(int argc, char *argv[])
                             }else{
                                 cout<<"\033[1;31mMESSAGE NOT SENT\033[0m"<<endl;
                             }
-                            send_redirect(browserfd, "/chat/"+m["recver"]);
+                            send_redirect(browserfd, "/chat/"+recver);
                         }else if(r.action == "/sendfile"){
                             //get file name
                             //create thread to send_file() to server
@@ -271,8 +272,13 @@ int main(int argc, char *argv[])
                             //get file name
                             //create thread to send_file() to server
                             //send Refresh response to browser
-                            
-                            send_redirect(browserfd, "/");
+                            string recver = r.headers["referer"].substr(r.headers["referer"].find_last_of("/")+1);
+                            send_str(serverfd, "sendfile");
+                            send_str(serverfd, recver);
+                            send_str(serverfd, r.headers["_filename"]);
+                            send_file(serverfd, "./data/tmp");
+
+                            send_redirect(browserfd, "/chat/"+recver);
                         }
                     }
                 }

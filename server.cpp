@@ -238,8 +238,9 @@ int main(int argc , char *argv[])
                         }
                         temp_fstream << "]}";
                         temp_fstream.close();
-                        thread t(send_file, sockfd, "./server_dir/json/"+names[i]+"_friends.json");
-                        t.detach();
+                        send_file(sockfd, "./server_dir/json/"+names[i]+"_friends.json");
+                        //thread t(send_file, sockfd, "./server_dir/json/"+names[i]+"_friends.json");
+                        //t.detach();
                     }else if(c == "add"){
                         string name_friend = recv_str(sockfd);
                         if(database.has_user(name_friend) && !database.is_friends(names[i],name_friend)){
@@ -278,8 +279,9 @@ int main(int argc , char *argv[])
                         temp_fstream <<  "]}";
                         temp_fstream.close();
                         send_file(sockfd, "./server_dir/json/"+names[i]+"_"+recver+".json");
-                        thread t(send_file, sockfd, "./server_dir/json/"+names[i]+"_"+recver+".json");
-                        t.detach();
+
+                        //thread t(send_file, sockfd, "./server_dir/json/"+names[i]+"_"+recver+".json");
+                        //t.detach();
                     }else if(c == "sendtext"){
                         string recver = recv_str(sockfd);
                         string text = recv_str(sockfd);
@@ -294,13 +296,14 @@ int main(int argc , char *argv[])
 
                         string unique_name = names[i]+"_"+recver+"_"+to_string(ts);
                         database.add_chat_log(names[i], recver, "file", filename, unique_name);
-                        
-                        thread t(recv_file, sockfd, "./server_dir/files/"+unique_name);
-                        t.detach();
+                        recv_file(sockfd, "./server_dir/files/"+unique_name);
+                        //thread t(recv_file, sockfd, "./server_dir/files/"+unique_name);
+                        //t.detach();
                     }else if(c == "download"){
                         string unique = recv_str(sockfd);
-                        thread t(send_file, sockfd, "./server_dir/files/"+unique);
-                        t.detach();
+                        send_file(sockfd, "./server_dir/files/"+unique);
+                        //thread t(send_file, sockfd, "./server_dir/files/"+unique);
+                        //t.detach();
                     }
                 }  
             }  

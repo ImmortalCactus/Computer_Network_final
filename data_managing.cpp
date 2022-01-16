@@ -37,7 +37,7 @@ void chat_db::init_db(){
     sql = "create table if not exists CHAT_HISTORY("
                 "SENDER TEXT NOT NULL,"
                 "RECVER TEXT NOT NULL,"
-                "TIMESTAMP DATETIME DEFAULT CURRENT_TIMESTAMP,"
+                "TIMESTAMP DATETIME DEFAULT (datetime('now','localtime')),"
                 "MSGTYPE TEXT NOT NULL,"
                 "CONTENT TEXT,"
                 "FILENAME TEXT);";

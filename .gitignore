@@ -2,6 +2,4 @@ chat.db
 sqlite3.o
 client
 server
-server_dir/*
 client_dir/*
-data/*

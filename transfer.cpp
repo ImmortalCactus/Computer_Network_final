@@ -132,6 +132,7 @@ string parse()
     int ll;
     for (ll = 7; ; ++ll)
     {
+        //cout << v[ll];
         string s = "filename";
         bool ok = true;
         for (int i = 0; i < 8; ++i) if (v[ll - 7 + i] != s[i])
@@ -139,7 +140,7 @@ string parse()
         if (ok) break;
     }
     string ret;
-    for (int i = ll + 2; ; ++i)
+    for (int i = ll + 3; ; ++i)
     {
         if (v[i] == '\"') break;
         ret += v[i];
@@ -207,7 +208,7 @@ http_request get_http_request(int sockfd){
         }
         fclose(fp);
 
-        cout<<"FILENAME: "<<parse()<<endl;
+        ret.headers["_filename"] = parse();
     }else if(ret.headers.count("content-length")!=0){
         int content_length;
         stringstream i_ss(ret.headers["content-length"]);
