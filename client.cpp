@@ -86,6 +86,10 @@ string p3A(string s)
 	string ret;
 	for (int i = 0; i < s.length(); ++i)
 	{
+        if (s[i] == '+'){
+            ret += ' ';
+            continue;
+        }
 		if (i + 2 < s.length())
 			if (s[i] == '%' && s[i + 1] == '3' && s[i + 2] == 'A')
 			{

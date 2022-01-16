@@ -76,6 +76,7 @@
                     node.classList.add("sendMsg");
                     var deleteButton = document.createElement("button");
                     deleteButton.classList.add("deleteButton");
+                    deleteButton.value = "X";
                     deleteButton.onclick = function(){
                         var m = document.getElementById("delmsg");
                         document.getElementsByName("timestamp")[0].value = t["timestamp"];
@@ -146,6 +147,15 @@
         }
         img {
             max-width: 800px;
+        }
+        .deleteButton {
+            background-color: red;
+            border: none;
+            display: inline-block;
+            width: 20px;
+            height: 20px;   
+            right: 0px;
+            margin: 10px;
         }
     </style>
 </html>
