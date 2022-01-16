@@ -290,9 +290,9 @@ int main(int argc , char *argv[])
                         string filename = recv_str(sockfd);
                         //get time so that the filename is unique
                         const auto p1 = std::chrono::system_clock::now();
-                        auto ts = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
+                        auto t = std::chrono::duration_cast<std::chrono::seconds>(p1.time_since_epoch()).count();
 
-                        string unique_name = names[i]+"_"+recver+"_"+to_string(ts);
+                        string unique_name = names[i]+"_"+recver+"_"+to_string(t);
                         database.add_chat_log(names[i], recver, "file", filename, unique_name);
                         
                         thread t(recv_file, sockfd, "./server_dir/files/"+unique_name);
