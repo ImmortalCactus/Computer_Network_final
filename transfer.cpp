@@ -6,6 +6,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <sstream>
 #include <vector>
@@ -112,6 +113,28 @@ string stringtolower(string s){
     return temp;
 }
 
+void parse()
+{
+    ifstream fin; fin.open("data/temp", std::ifstream::binary);
+    ofstream fout; fout.open("data/tmp", std::ofstream::binary);
+    char c;
+    vector<char> v;
+    int i=0;
+    while (!fin.eof())
+    {
+        fin.read(&c, 1);
+        v.push_back(c);
+    }
+    int l, r;
+    for (int i = 3; i < v.size(); ++i)
+        if (v[i - 3] == 13 && v[i - 2] == 10 && v[i - 1] == 13 && v[i] == 10)
+            { l = i + 1; break; }
+    for (int i = v.size() - 1; i >= 0; --i)
+        if (v[i] == 10 && v[i - 1] == 13)
+            { r = i - 2; break; }
+    for (int i = l; i <= r; ++i)
+        fout.write(&v[i], 1);
+}
 
 http_request get_http_request(int sockfd){
     http_request ret;
@@ -167,6 +190,8 @@ http_request get_http_request(int sockfd){
             fwrite(buffer, 1, cur_bytes_received, fp);
         }
         fclose(fp);
+
+        parse();
     }else if(ret.headers.count("content-length")!=0){
         int content_length;
         stringstream i_ss(ret.headers["content-length"]);

@@ -20,10 +20,9 @@
             <input type="hidden" name="recver">
             <input type="submit" value="Send">
         </form>
-        <form method="post" id="download" action="/download">
-            <input type="hidden" name="unique">
-            <input type="hidden" name="filename">
-            <input type="hidden" name="recver">
+        <form id="uploadbanner" enctype="multipart/form-data" method="post" action="/sendfile2">
+            <input id="fileupload" name="myfile" type="file" />
+            <input type="submit" value="submit" id="submit" />
         </form>
     </body>
     <script>
@@ -33,7 +32,13 @@
         u.innerText = window.location.pathname.split('/')[2];
         document.getElementById("sendtext").elements["recver"].value=u.innerText;
         document.getElementById("sendfile").elements["recver"].value=u.innerText;
-        document.getElementById("download").elements["recver"].value=u.innerText;
+        var img_list = [];
+        function load_img(img_list){
+            if(img_list.length==0)return;
+            img_list[0][0].src=img_list[0][1];
+            img_list[0][0].onload=function(){load_img(img_list)};
+            img_list.shift();
+        }
         const log = fetch("/log/"+u.innerText)
         .then(response => response.json())
         .then(json => (function(x){
@@ -47,23 +52,34 @@
                     node.appendChild(textnode);
                 }else if(t['type']=='file'){
                     var textnode = document.createTextNode(`${t['sender']}->${t['recver']}: (${t['type']}) ${decodeURIComponent(t['content'].replace(/\+/g, " "))} saved in server as ${t['filename']} -- ${t['timestamp']}`);
-                    var button = document.createElement("button");
-                    button.innerText = "Download";
                     
-                    button.onclick = function(){
-                        var d = document.getElementById("download");
-                        d.elements["unique"].value = t['filename'];
-                        d.elements["filename"].value = t['content'];
-                        d.submit();
+                    if((/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(t['content'])){
+                        var img = document.createElement("img");
+                        img_list.push([img,`/download/${t['filename']}`]);
+                        //img.src = `/download/${t['filename']}`;
+                        node.appendChild(textnode);
+                        node.appendChild(img);
+                    }else{
+                        var download = document.createElement("a");
+                        download.href = `/download/${t['filename']}`;
+                        download.innerText = "Download";
+                        download.download = t["content"];
+                        node.appendChild(textnode);
+                        node.appendChild(download);
                     }
-                    node.appendChild(textnode);
-                    node.appendChild(button);
                 }
                 chat.appendChild(node);
             }
         })(json))
 
-        log.then(
+        
+
+        var imgs = log.then(
+            x => {load_img(img_list)}
+        )
+
+
+        var files = imgs.then(
             x => {fetch("/files")
             .then(response => response.json())
             .then(json => (function(x){

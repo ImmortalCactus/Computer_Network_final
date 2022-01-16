@@ -203,6 +203,14 @@ int main(int argc, char *argv[])
                             temp_fstream.close();
                             send_http(browserfd, "./data/files.json", "text/html");
                                 
+                        }else if(r.action.substr(0,10) == "/download/"){
+                            string unique = r.action.substr(10);
+                            cout<<"downloading "<<unique<<endl;
+                            send_str(serverfd, "download");
+                            send_str(serverfd, unique);
+                            recv_file(serverfd, "./client_dir/temp");
+                            
+                            send_http(browserfd, "./client_dir/temp", "text/html");
                         }else{
                             send_http(browserfd, "./static/main.html", "text/html");
                         }
@@ -259,16 +267,12 @@ int main(int argc, char *argv[])
                             send_file(serverfd, "./client_dir/"+m["filename"]);
 
                             send_redirect(browserfd, "/chat/"+m["recver"]);
-                        }else if(r.action == "/download"){
+                        }else if(r.action == "/sendfile2"){
                             //get file name
-                            //if file is not in client_dir, get file from server
-                            //send Refresh response
-                            map<string, string> m = process_form_data(r.content);
-                            send_str(serverfd, "download");
-                            send_str(serverfd, m["unique"]);
-                            recv_file(serverfd, "./client_dir/"+m["filename"]);
+                            //create thread to send_file() to server
+                            //send Refresh response to browser
                             
-                            send_redirect(browserfd, "/chat/"+m["recver"]);
+                            send_redirect(browserfd, "/");
                         }
                     }
                 }
